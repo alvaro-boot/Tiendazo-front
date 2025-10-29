@@ -20,7 +20,6 @@ interface StoreFormData {
   address: string;
   phone: string;
   currency: string;
-  taxRate: number;
 }
 
 interface UserFormData {
@@ -36,7 +35,6 @@ export default function SettingsPage() {
       address: currentStore?.address || "",
       phone: currentStore?.phone || "",
       currency: currentStore?.currency || config.DEFAULT_CURRENCY,
-      taxRate: (currentStore?.taxRate || config.DEFAULT_TAX_RATE) * 100,
     },
   });
 
@@ -51,7 +49,6 @@ export default function SettingsPage() {
     if (currentStore) {
       updateStore(currentStore.id, {
         ...data,
-        taxRate: data.taxRate / 100,
       });
       alert("Configuración de tienda actualizada");
     }
@@ -106,24 +103,12 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="store-currency">Moneda</Label>
-                  <Input
-                    id="store-currency"
-                    {...storeForm.register("currency")}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="store-tax">Tasa de Impuesto (%)</Label>
-                  <Input
-                    id="store-tax"
-                    type="number"
-                    step="0.01"
-                    {...storeForm.register("taxRate", { valueAsNumber: true })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="store-currency">Moneda</Label>
+                <Input
+                  id="store-currency"
+                  {...storeForm.register("currency")}
+                />
               </div>
 
               <Button type="submit" className="w-full">

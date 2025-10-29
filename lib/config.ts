@@ -17,9 +17,8 @@ export const config = {
   // Configuración de desarrollo
   IS_DEVELOPMENT: process.env.NODE_ENV === "development",
 
-  // Configuración por defecto de moneda e impuestos
+  // Configuración por defecto de moneda
   DEFAULT_CURRENCY: "COP", // Peso colombiano
-  DEFAULT_TAX_RATE: 0, // Sin impuestos por defecto
   CURRENCY_SYMBOL: "$", // Símbolo del peso colombiano
   CURRENCY_FORMAT: "es-CO", // Formato colombiano
 };

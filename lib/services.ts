@@ -40,7 +40,6 @@ export interface Store {
   phone: string;
   email: string;
   currency?: string; // Moneda de la tienda
-  taxRate?: number; // Tasa de impuesto (0-1)
   createdAt: string;
   updatedAt: string;
 }
@@ -52,7 +51,6 @@ export interface StoreData {
   phone: string;
   email: string;
   currency?: string; // Moneda de la tienda
-  taxRate?: number; // Tasa de impuesto (0-1)
 }
 
 export interface Product {
@@ -139,6 +137,13 @@ export interface CategoryData {
   image?: string;
 }
 
+export interface ClientData {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
 // Servicios de autenticación
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
@@ -169,14 +174,10 @@ export const storeService = {
     const axios = require("axios");
 
     try {
-      // Agregar configuración por defecto de moneda e impuestos si no se proporcionan
+      // Agregar configuración por defecto de moneda si no se proporciona
       const storeDataWithDefaults = {
         ...storeData,
         currency: storeData.currency || config.DEFAULT_CURRENCY,
-        taxRate:
-          storeData.taxRate !== undefined
-            ? storeData.taxRate
-            : config.DEFAULT_TAX_RATE,
       };
 
       console.log(

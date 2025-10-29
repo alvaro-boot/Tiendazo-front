@@ -39,9 +39,8 @@ export function RegisterForm() {
   const [storePhone, setStorePhone] = useState("");
   const [storeEmail, setStoreEmail] = useState("");
 
-  // Configuración de moneda e impuestos
+  // Configuración de moneda
   const [storeCurrency, setStoreCurrency] = useState(config.DEFAULT_CURRENCY);
-  const [storeTaxRate, setStoreTaxRate] = useState(config.DEFAULT_TAX_RATE);
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -97,7 +96,6 @@ export function RegisterForm() {
         phone: storePhone,
         email: storeEmail,
         currency: storeCurrency,
-        taxRate: storeTaxRate,
       });
       console.log("✅ Tienda creada exitosamente:", storeResult);
 
@@ -301,45 +299,28 @@ export function RegisterForm() {
               </div>
             </div>
 
-            {/* Configuración de moneda e impuestos */}
+            {/* Configuración de moneda */}
             <div className="space-y-4 border-t pt-4">
               <h4 className="text-md font-medium text-muted-foreground">
-                Configuración Financiera
+                Configuración de Moneda
               </h4>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="storeCurrency">Moneda</Label>
-                  <select
-                    id="storeCurrency"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={storeCurrency}
-                    onChange={(e) => setStoreCurrency(e.target.value)}
-                  >
-                    <option value="COP">Peso Colombiano (COP)</option>
-                    <option value="USD">Dólar Americano (USD)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="MXN">Peso Mexicano (MXN)</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="storeTaxRate">Tasa de Impuesto (%)</Label>
-                  <Input
-                    id="storeTaxRate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={storeTaxRate}
-                    onChange={(e) =>
-                      setStoreTaxRate(parseFloat(e.target.value) || 0)
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Por defecto: 0% (sin impuestos)
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="storeCurrency">Moneda</Label>
+                <select
+                  id="storeCurrency"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={storeCurrency}
+                  onChange={(e) => setStoreCurrency(e.target.value)}
+                >
+                  <option value="COP">Peso Colombiano (COP)</option>
+                  <option value="USD">Dólar Americano (USD)</option>
+                  <option value="EUR">Euro (EUR)</option>
+                  <option value="MXN">Peso Mexicano (MXN)</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Moneda por defecto para precios y transacciones
+                </p>
               </div>
             </div>
           </div>

@@ -16,7 +16,6 @@ export interface Store {
   address: string;
   phone: string;
   currency: string;
-  taxRate: number;
 }
 
 export interface Product {

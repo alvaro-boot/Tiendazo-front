@@ -3,6 +3,7 @@
 ## 📋 Análisis de Funcionalidades Actuales vs Nuevas
 
 ### ✅ **Funcionalidades Ya Implementadas**
+
 - ✅ Autenticación (login, register, profile)
 - ✅ Tiendas (CRUD básico)
 - ✅ Productos (CRUD básico)
@@ -13,8 +14,10 @@
 ### 🆕 **Nuevas Funcionalidades a Implementar**
 
 ## 1. 📦 **Gestión de Categorías** (PRIORIDAD ALTA)
+
 **Estado:** No implementado
 **Endpoints nuevos:**
+
 - `POST /api/categories` - Crear categoría
 - `GET /api/categories` - Listar categorías
 - `GET /api/categories/:id` - Obtener categoría
@@ -22,14 +25,17 @@
 - `DELETE /api/categories/:id` - Eliminar categoría
 
 **Implementación:**
+
 - Crear `categoryService` en `lib/services.ts`
 - Crear interfaces `Category` y `CategoryData`
 - Crear página de gestión de categorías
 - Integrar con formulario de productos
 
 ## 2. 📊 **Gestión de Inventario** (PRIORIDAD ALTA)
+
 **Estado:** No implementado
 **Endpoints nuevos:**
+
 - `POST /api/inventory/movement` - Crear movimiento
 - `POST /api/inventory/adjust-stock` - Ajustar stock
 - `GET /api/inventory/movements` - Listar movimientos
@@ -38,14 +44,17 @@
 - `GET /api/inventory/stock-history/:productId` - Historial de stock
 
 **Implementación:**
+
 - Crear `inventoryService` en `lib/services.ts`
 - Crear interfaces para movimientos de inventario
 - Crear página de gestión de inventario
 - Integrar alertas de stock bajo
 
 ## 3. 💳 **Sistema de Fiados Mejorado** (PRIORIDAD MEDIA)
+
 **Estado:** Parcialmente implementado
 **Endpoints nuevos:**
+
 - `POST /api/debts/payment` - Registrar pago
 - `GET /api/debts/payments` - Listar pagos
 - `GET /api/debts/report` - Reporte de deudas
@@ -54,14 +63,17 @@
 - `GET /api/debts/client-history/:clientId` - Historial de pagos
 
 **Implementación:**
+
 - Expandir `debtService` existente
 - Crear interfaces para pagos de deudas
 - Mejorar página de gestión de deudas
 - Crear historial de pagos por cliente
 
 ## 4. 📈 **Sistema de Reportes** (PRIORIDAD MEDIA)
+
 **Estado:** No implementado
 **Endpoints nuevos:**
+
 - `POST /api/reports/generate` - Generar reporte personalizado
 - `GET /api/reports/sales` - Reporte de ventas
 - `GET /api/reports/inventory` - Reporte de inventario
@@ -69,18 +81,22 @@
 - `GET /api/reports/profits` - Reporte de ganancias
 
 **Implementación:**
+
 - Crear `reportService` en `lib/services.ts`
 - Crear página de reportes
 - Implementar filtros por fecha y tienda
 - Crear componentes de gráficos
 
 ## 5. 📁 **Subida de Archivos** (PRIORIDAD BAJA)
+
 **Estado:** No implementado
 **Endpoints nuevos:**
+
 - `POST /api/uploads/image` - Subir imagen
 - `POST /api/uploads/document` - Subir documento
 
 **Implementación:**
+
 - Crear `uploadService` en `lib/services.ts`
 - Crear componente de subida de archivos
 - Integrar con productos y categorías
@@ -88,40 +104,48 @@
 ## 6. 🔧 **Mejoras en Servicios Existentes** (PRIORIDAD ALTA)
 
 ### Productos Mejorados:
+
 - `GET /api/products/low-stock` - Productos con stock bajo
 - `PATCH /api/products/:id/stock` - Actualizar stock
 
 ### Clientes Mejorados:
+
 - `GET /api/clients/with-debt` - Clientes con deuda
 - `PATCH /api/clients/:id/debt` - Actualizar deuda
 
 ### Ventas Mejoradas:
+
 - Filtros por fecha y tienda
 - Reportes de ventas
 
 ## 🎯 **Orden de Implementación Recomendado**
 
 ### **Fase 1: Fundamentos** (Semana 1)
+
 1. ✅ Gestión de Categorías
 2. ✅ Mejoras en Productos (stock bajo, actualización de stock)
 3. ✅ Mejoras en Clientes (deudas)
 
 ### **Fase 2: Inventario** (Semana 2)
+
 1. ✅ Gestión de Inventario
 2. ✅ Movimientos de stock
 3. ✅ Alertas de stock bajo
 
 ### **Fase 3: Reportes** (Semana 3)
+
 1. ✅ Sistema de Reportes
 2. ✅ Reportes de ventas
 3. ✅ Reportes de inventario
 
 ### **Fase 4: Fiados Avanzados** (Semana 4)
+
 1. ✅ Sistema de Fiados mejorado
 2. ✅ Historial de pagos
 3. ✅ Reportes de deudas
 
 ### **Fase 5: Archivos** (Semana 5)
+
 1. ✅ Subida de archivos
 2. ✅ Imágenes de productos
 3. ✅ Documentos
