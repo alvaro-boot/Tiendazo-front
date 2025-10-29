@@ -123,11 +123,20 @@ export interface Client {
   updatedAt: string;
 }
 
-export interface ClientData {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
+export interface Category {
+  id: number;
+  name: string;
+  description: string;
+  image?: string;
+  storeId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CategoryData {
+  name: string;
+  description: string;
+  image?: string;
 }
 
 // Servicios de autenticación
@@ -210,10 +219,55 @@ export const storeService = {
   },
 };
 
+// Servicios de categorías
+export const categoryService = {
+  async getCategories(): Promise<Category[]> {
+    const response = await api.get("/categories");
+    return response.data;
+  },
+
+  async createCategory(categoryData: CategoryData): Promise<Category> {
+    const response = await api.post("/categories", categoryData);
+    return response.data;
+  },
+
+  async getCategoryById(id: number): Promise<Category> {
+    const response = await api.get(`/categories/${id}`);
+    return response.data;
+  },
+
+  async updateCategory(
+    id: number,
+    categoryData: Partial<CategoryData>
+  ): Promise<Category> {
+    const response = await api.patch(`/categories/${id}`, categoryData);
+    return response.data;
+  },
+
+  async deleteCategory(id: number): Promise<void> {
+    await api.delete(`/categories/${id}`);
+  },
+};
+
 // Servicios de productos
 export const productService = {
-  async getProducts(): Promise<Product[]> {
-    const response = await api.get("/products");
+  async getProducts(filters?: {
+    q?: string;
+    categoryId?: number;
+    storeId?: number;
+  }): Promise<Product[]> {
+    const params = new URLSearchParams();
+    if (filters?.q) params.append("q", filters.q);
+    if (filters?.categoryId) params.append("categoryId", filters.categoryId.toString());
+    if (filters?.storeId) params.append("storeId", filters.storeId.toString());
+    
+    const response = await api.get(`/products?${params.toString()}`);
+    return response.data;
+  },
+
+  async getLowStockProducts(storeId?: number): Promise<Product[]> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/products/low-stock${params}`);
     return response.data;
   },
 
@@ -239,8 +293,15 @@ export const productService = {
     await api.delete(`/products/${id}`);
   },
 
-  async searchProducts(query: string): Promise<Product[]> {
-    const response = await api.get(`/products/search?q=${query}`);
+  async updateStock(
+    id: number,
+    quantity: number,
+    operation: "add" | "subtract" | "set"
+  ): Promise<Product> {
+    const response = await api.patch(`/products/${id}/stock`, {
+      quantity,
+      operation,
+    });
     return response.data;
   },
 };
@@ -286,8 +347,14 @@ export const saleService = {
 
 // Servicios de clientes
 export const clientService = {
-  async getClients(): Promise<Client[]> {
-    const response = await api.get("/clients");
+  async getClients(filters?: { q?: string }): Promise<Client[]> {
+    const params = filters?.q ? `?q=${filters.q}` : "";
+    const response = await api.get(`/clients${params}`);
+    return response.data;
+  },
+
+  async getClientsWithDebt(): Promise<Client[]> {
+    const response = await api.get("/clients/with-debt");
     return response.data;
   },
 
@@ -313,8 +380,253 @@ export const clientService = {
     await api.delete(`/clients/${id}`);
   },
 
-  async searchClients(query: string): Promise<Client[]> {
-    const response = await api.get(`/clients/search?q=${query}`);
+  async updateDebt(
+    id: number,
+    amount: number,
+    operation: "add" | "subtract" | "set"
+  ): Promise<Client> {
+    const response = await api.patch(`/clients/${id}/debt`, {
+      amount,
+      operation,
+    });
+    return response.data;
+  },
+};
+
+export interface InventoryMovement {
+  id: number;
+  productId: number;
+  type: "IN" | "OUT" | "ADJUSTMENT" | "SALE" | "RETURN";
+  quantity: number;
+  unitPrice: number;
+  reason: string;
+  reference?: string;
+  createdAt: string;
+}
+
+export interface StockAdjustment {
+  productId: number;
+  newStock: number;
+  reason: string;
+}
+
+// Servicios de inventario
+export const inventoryService = {
+  async createMovement(movementData: {
+    productId: number;
+    type: "IN" | "OUT" | "ADJUSTMENT" | "SALE" | "RETURN";
+    quantity: number;
+    unitPrice: number;
+    reason: string;
+    reference?: string;
+  }): Promise<InventoryMovement> {
+    const response = await api.post("/inventory/movement", movementData);
+    return response.data;
+  },
+
+  async adjustStock(adjustmentData: StockAdjustment): Promise<Product> {
+    const response = await api.post("/inventory/adjust-stock", adjustmentData);
+    return response.data;
+  },
+
+  async getMovements(productId?: number): Promise<InventoryMovement[]> {
+    const params = productId ? `?productId=${productId}` : "";
+    const response = await api.get(`/inventory/movements${params}`);
+    return response.data;
+  },
+
+  async getLowStockProducts(storeId?: number): Promise<Product[]> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/inventory/low-stock${params}`);
+    return response.data;
+  },
+
+  async getInventoryReport(storeId?: number): Promise<any> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/inventory/report${params}`);
+    return response.data;
+  },
+
+  async getMovementById(id: number): Promise<InventoryMovement> {
+    const response = await api.get(`/inventory/movements/${id}`);
+    return response.data;
+  },
+
+  async getStockHistory(productId: number): Promise<InventoryMovement[]> {
+    const response = await api.get(`/inventory/stock-history/${productId}`);
+    return response.data;
+  },
+};
+
+export interface ReportFilters {
+  startDate?: string;
+  endDate?: string;
+  storeId?: number;
+  clientId?: number;
+  productId?: number;
+  format?: "json" | "excel";
+}
+
+// Servicios de reportes
+export const reportService = {
+  async generateReport(reportData: {
+    type: "SALES" | "INVENTORY" | "DEBTS" | "PROFITS" | "CLIENTS" | "PRODUCTS";
+    startDate?: string;
+    endDate?: string;
+    storeId?: number;
+    format?: "json" | "excel";
+  }): Promise<any> {
+    const response = await api.post("/reports/generate", reportData);
+    return response.data;
+  },
+
+  async getSalesReport(filters: ReportFilters): Promise<any> {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append("startDate", filters.startDate);
+    if (filters.endDate) params.append("endDate", filters.endDate);
+    if (filters.storeId) params.append("storeId", filters.storeId.toString());
+    if (filters.clientId) params.append("clientId", filters.clientId.toString());
+    if (filters.format) params.append("format", filters.format);
+    
+    const response = await api.get(`/reports/sales?${params.toString()}`);
+    return response.data;
+  },
+
+  async getInventoryReport(filters: ReportFilters): Promise<any> {
+    const params = new URLSearchParams();
+    if (filters.storeId) params.append("storeId", filters.storeId.toString());
+    if (filters.productId) params.append("productId", filters.productId.toString());
+    if (filters.format) params.append("format", filters.format);
+    
+    const response = await api.get(`/reports/inventory?${params.toString()}`);
+    return response.data;
+  },
+
+  async getDebtsReport(filters: ReportFilters): Promise<any> {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append("startDate", filters.startDate);
+    if (filters.endDate) params.append("endDate", filters.endDate);
+    if (filters.clientId) params.append("clientId", filters.clientId.toString());
+    if (filters.format) params.append("format", filters.format);
+    
+    const response = await api.get(`/reports/debts?${params.toString()}`);
+    return response.data;
+  },
+
+  async getProfitsReport(filters: ReportFilters): Promise<any> {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append("startDate", filters.startDate);
+    if (filters.endDate) params.append("endDate", filters.endDate);
+    if (filters.storeId) params.append("storeId", filters.storeId.toString());
+    if (filters.format) params.append("format", filters.format);
+    
+    const response = await api.get(`/reports/profits?${params.toString()}`);
+    return response.data;
+  },
+};
+
+export interface UploadResponse {
+  url: string;
+  filename: string;
+  size: number;
+  type: string;
+}
+
+// Servicios de subida de archivos
+export const uploadService = {
+  async uploadImage(file: File): Promise<UploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const response = await api.post("/uploads/image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  async uploadDocument(file: File): Promise<UploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const response = await api.post("/uploads/document", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+};
+
+export interface DebtPayment {
+  id: number;
+  clientId: number;
+  amount: number;
+  paymentType: "CASH" | "TRANSFER" | "CARD" | "OTHER";
+  reference?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+// Servicios de fiados
+export const debtService = {
+  async registerPayment(paymentData: {
+    clientId: number;
+    amount: number;
+    paymentType: "CASH" | "TRANSFER" | "CARD" | "OTHER";
+    reference?: string;
+    notes?: string;
+  }): Promise<DebtPayment> {
+    const response = await api.post("/debts/payment", paymentData);
+    return response.data;
+  },
+
+  async getPayments(filters?: {
+    startDate?: string;
+    endDate?: string;
+    clientId?: number;
+  }): Promise<DebtPayment[]> {
+    const params = new URLSearchParams();
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.clientId) params.append("clientId", filters.clientId.toString());
+    
+    const response = await api.get(`/debts/payments?${params.toString()}`);
+    return response.data;
+  },
+
+  async getDebtsReport(filters?: {
+    startDate?: string;
+    endDate?: string;
+    clientId?: number;
+  }): Promise<any> {
+    const params = new URLSearchParams();
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.clientId) params.append("clientId", filters.clientId.toString());
+    
+    const response = await api.get(`/debts/report?${params.toString()}`);
+    return response.data;
+  },
+
+  async getClientsWithDebt(): Promise<Client[]> {
+    const response = await api.get("/debts/clients-with-debt");
+    return response.data;
+  },
+
+  async getTotalDebt(): Promise<{ total: number }> {
+    const response = await api.get("/debts/total-debt");
+    return response.data;
+  },
+
+  async getPaymentById(id: number): Promise<DebtPayment> {
+    const response = await api.get(`/debts/payments/${id}`);
+    return response.data;
+  },
+
+  async getClientPaymentHistory(clientId: number): Promise<DebtPayment[]> {
+    const response = await api.get(`/debts/client-history/${clientId}`);
     return response.data;
   },
 };
