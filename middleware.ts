@@ -11,6 +11,7 @@ export function middleware(request: NextRequest) {
     console.log("🔍 Middleware:", {
       path: pathname,
       hasToken: !!token,
+      tokenValue: token ? `${token.substring(0, 10)}...` : null,
     });
 
     // Si no hay token, redirigir al login

@@ -19,15 +19,25 @@ export const useAuth = () => {
         const token = storage.get(config.TOKEN_KEY);
         const userData = storage.get(config.USER_KEY);
 
+        console.log("🔍 Inicializando autenticación:", {
+          hasToken: !!token,
+          hasUserData: !!userData,
+          tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+        });
+
         if (token && userData) {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
-          console.log("✅ Usuario cargado desde localStorage");
+          console.log("✅ Usuario cargado desde localStorage:", parsedUser);
+          
+          // Asegurar que la cookie esté sincronizada
+          document.cookie = `access_token=${token}; path=/; max-age=86400; secure; samesite=strict`;
         } else {
           console.log("🔍 No hay datos de autenticación almacenados");
+          setUser(null);
         }
       } catch (error) {
-        console.error("Error inicializando autenticación:", error);
+        console.error("❌ Error inicializando autenticación:", error);
         storage.remove(config.TOKEN_KEY);
         storage.remove(config.USER_KEY);
         setUser(null);
@@ -42,19 +52,24 @@ export const useAuth = () => {
   const login = async (credentials: LoginCredentials) => {
     try {
       setLoading(true);
+      console.log("🔐 Iniciando sesión con:", credentials.username);
+      
       const data = await authService.login(credentials);
+      console.log("✅ Login exitoso:", data);
 
       // Guardar en localStorage
       storage.set(config.TOKEN_KEY, data.access_token);
       storage.set(config.USER_KEY, JSON.stringify(data.user));
 
       // También guardar en cookies para el middleware
-      document.cookie = `access_token=${data.access_token}; path=/; max-age=86400`; // 24 horas
+      document.cookie = `access_token=${data.access_token}; path=/; max-age=86400; secure; samesite=strict`; // 24 horas
+      console.log("💾 Token guardado en localStorage y cookies");
 
       setUser(data.user);
 
       return data;
     } catch (error: any) {
+      console.error("❌ Error en login:", error);
       // Manejar errores específicos de la API
       if (error.response?.status === 401) {
         throw new Error("Credenciales incorrectas");

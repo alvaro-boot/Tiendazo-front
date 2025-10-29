@@ -14,8 +14,15 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = storage.get(config.TOKEN_KEY);
+    console.log("📤 Enviando request a:", config.url, {
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+    });
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn("⚠️ No hay token disponible para la request");
     }
     return config;
   },
@@ -28,7 +35,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.log("🚨 Error en API:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      method: error.config?.method,
+      data: error.response?.data,
+    });
+
     if (error.response?.status === 401) {
+      console.log("🔐 Error 401 - Token inválido, cerrando sesión");
       storage.remove(config.TOKEN_KEY);
       storage.remove(config.USER_KEY);
       if (typeof window !== "undefined") {
