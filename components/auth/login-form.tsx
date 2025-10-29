@@ -17,7 +17,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuthContext } from "@/lib/auth-context";
-import { Info } from "lucide-react";
 
 export function LoginForm() {
   const router = useRouter();
@@ -48,15 +47,7 @@ export function LoginForm() {
     }
   }
 
-  function fillTestCredentials(type: "admin" | "employee") {
-    if (type === "admin") {
-      setUsername("admin");
-      setPassword("admin123");
-    } else {
-      setUsername("employee");
-      setPassword("employee123");
-    }
-  }
+  // Función de credenciales de prueba eliminada para producción
 
   return (
     <Card>
@@ -66,50 +57,6 @@ export function LoginForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg space-y-3">
-            <div className="flex items-start gap-2">
-              <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <div className="space-y-2 flex-1">
-                <p className="text-sm font-medium text-primary">
-                  Credenciales de Prueba
-                </p>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium">Administrador:</p>
-                      <p className="text-muted-foreground">admin / admin123</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fillTestCredentials("admin")}
-                      className="text-xs"
-                    >
-                      Usar
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium">Empleado:</p>
-                      <p className="text-muted-foreground">
-                        employee / employee123
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fillTestCredentials("employee")}
-                      className="text-xs"
-                    >
-                      Usar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {error && (
             <div className="p-3 text-sm text-destructive-foreground bg-destructive/10 border border-destructive rounded-md">
@@ -121,7 +68,7 @@ export function LoginForm() {
             <Input
               id="username"
               type="text"
-              placeholder="admin"
+              placeholder="Ingresa tu usuario"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required

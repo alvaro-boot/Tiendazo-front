@@ -32,14 +32,9 @@ El frontend estará disponible en `http://localhost:4200`.
 
 ## 🔐 Autenticación
 
-### Credenciales de Prueba
-
-El sistema incluye credenciales de prueba preconfiguradas:
-
-- **Administrador**: `admin` / `admin123`
-- **Empleado**: `employee` / `employee123`
-
 ### Registro de Usuarios
+
+Los usuarios deben registrarse desde cero. No hay credenciales preconfiguradas para producción.
 
 Los usuarios pueden registrarse con los siguientes roles:
 

@@ -178,29 +178,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Zona de Peligro</CardTitle>
-          <CardDescription>Acciones irreversibles</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border border-destructive/50 p-4">
-            <div>
-              <p className="font-medium">Limpiar Datos de Prueba</p>
-              <p className="text-sm text-muted-foreground">
-                Elimina todos los datos de ejemplo
-              </p>
-            </div>
-            <Button
-              variant="destructive"
-              onClick={() => alert("Funcionalidad pendiente")}
-            >
-              Limpiar Datos
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
