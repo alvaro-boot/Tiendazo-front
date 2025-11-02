@@ -47,47 +47,62 @@ export function NewSale() {
   const [notes, setNotes] = useState("");
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-      // Cargar productos solo para lectura, filtrados por tienda
-      useEffect(() => {
-        const loadProducts = async () => {
-          try {
-            setLoading(true);
-            const productsData = await productService.getProducts(
-              user?.storeId ? { storeId: user.storeId } : undefined
-            );
-            // Normalizar los datos: asegurar que los precios sean números
-            const normalizedProducts = productsData.map((product) => ({
-              ...product,
-              purchasePrice: Number(product.purchasePrice || 0),
-              sellPrice: Number(product.sellPrice || 0),
-              stock: Number(product.stock || 0),
-              minStock: Number(product.minStock || 0),
-            }));
-            setProducts(normalizedProducts);
-          } catch (error) {
-            console.error("Error al cargar productos:", error);
-            setProducts([]);
-          } finally {
-            setLoading(false);
-          }
-        };
+  // Cargar productos solo para lectura, filtrados por tienda
+  useEffect(() => {
+    const loadProducts = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-        if (user?.storeId) {
-          loadProducts();
-        }
-      }, [user?.storeId]);
+      try {
+        setLoading(true);
+        setError(null);
+        console.log("🛒 Cargando productos para venta, storeId:", user.storeId);
+        
+        const filters = user.storeId ? { storeId: user.storeId } : undefined;
+        const productsData = await productService.getProducts(filters);
+        
+        console.log("✅ Productos cargados:", productsData.length);
+        
+        // Normalizar los datos: asegurar que los precios sean números
+        const normalizedProducts = productsData.map((product) => ({
+          ...product,
+          purchasePrice: Number(product.purchasePrice || 0),
+          sellPrice: Number(product.sellPrice || 0),
+          stock: Number(product.stock || 0),
+          minStock: Number(product.minStock || 0),
+        }));
+        setProducts(normalizedProducts);
+      } catch (error: any) {
+        console.error("❌ Error al cargar productos:", error);
+        setError(error.message || "Error al cargar productos");
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, [user?.storeId, user]);
 
   const filteredProducts = useMemo(() => {
-    if (!searchTerm) return [];
-    return products
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.barcode.includes(searchTerm) ||
-          p.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .slice(0, 10); // Mostrar hasta 10 resultados
+    // Si no hay búsqueda, mostrar todos los productos con stock (limitado a 20 para no saturar)
+    // Si hay búsqueda, filtrar por el término
+    const productsWithStock = products.filter((p) => p.stock > 0);
+    
+    if (!searchTerm) {
+      return productsWithStock.slice(0, 20); // Mostrar hasta 20 productos sin búsqueda
+    }
+    
+    return productsWithStock.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.barcode && p.barcode.includes(searchTerm)) ||
+        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
   }, [products, searchTerm]);
 
   const addToCart = (product: any) => {
@@ -220,14 +235,65 @@ export function NewSale() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre o código de barras..."
+                placeholder={products.length > 0 ? `Buscar entre ${products.length} productos...` : "Buscar por nombre o código de barras..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 h-12 border-2 text-base focus:border-primary transition-colors"
+                disabled={loading}
               />
             </div>
+            {!loading && !error && products.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {filteredProducts.length} {filteredProducts.length === 1 ? "producto disponible" : "productos disponibles"}
+                {searchTerm && ` (de ${products.length} total)`}
+              </p>
+            )}
 
-            {searchTerm && filteredProducts.length > 0 && (
+            {loading && (
+              <div className="mt-4 text-center py-8 text-muted-foreground">
+                <p>Cargando productos...</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-4 rounded-xl bg-destructive/10 border-2 border-destructive/20 p-4">
+                <p className="text-sm font-medium text-destructive">
+                  ⚠️ {error}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => {
+                    setError(null);
+                    const loadProducts = async () => {
+                      try {
+                        setLoading(true);
+                        const filters = user?.storeId ? { storeId: user.storeId } : undefined;
+                        const productsData = await productService.getProducts(filters);
+                        const normalizedProducts = productsData.map((product) => ({
+                          ...product,
+                          purchasePrice: Number(product.purchasePrice || 0),
+                          sellPrice: Number(product.sellPrice || 0),
+                          stock: Number(product.stock || 0),
+                          minStock: Number(product.minStock || 0),
+                        }));
+                        setProducts(normalizedProducts);
+                      } catch (err: any) {
+                        setError(err.message || "Error al cargar productos");
+                      } finally {
+                        setLoading(false);
+                      }
+                    };
+                    loadProducts();
+                  }}
+                >
+                  Reintentar
+                </Button>
+              </div>
+            )}
+
+            {!loading && !error && filteredProducts.length > 0 && (
               <div className="mt-4 space-y-2 max-h-[400px] overflow-y-auto">
                 {filteredProducts.map((product) => (
                   <div
@@ -250,15 +316,30 @@ export function NewSale() {
               </div>
             )}
 
-            {searchTerm && filteredProducts.length === 0 && !loading && (
-              <div className="mt-4 text-center text-muted-foreground">
-                <p>No se encontraron productos con ese término</p>
+            {!loading && !error && searchTerm && filteredProducts.length === 0 && (
+              <div className="mt-4 text-center py-8 rounded-xl border-2 border-dashed bg-muted/50">
+                <p className="text-muted-foreground">No se encontraron productos con ese término</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Intenta con otro término de búsqueda o revisa el stock disponible
+                </p>
               </div>
             )}
 
-            {loading && (
-              <div className="mt-4 text-center text-muted-foreground">
-                <p>Cargando productos...</p>
+            {!loading && !error && products.length === 0 && (
+              <div className="mt-4 text-center py-8 rounded-xl border-2 border-dashed bg-muted/50">
+                <p className="text-muted-foreground">No hay productos disponibles</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ve a la página de productos para crear productos o revisa el filtro de tienda
+                </p>
+              </div>
+            )}
+
+            {!loading && !error && products.length > 0 && !searchTerm && filteredProducts.length === 0 && (
+              <div className="mt-4 text-center py-8 rounded-xl border-2 border-dashed bg-muted/50">
+                <p className="text-muted-foreground">No hay productos con stock disponible</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Todos los productos están sin stock. Ve a la página de productos para agregar stock.
+                </p>
               </div>
             )}
           </CardContent>

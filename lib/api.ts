@@ -62,15 +62,22 @@ api.interceptors.response.use(
     // Si es un error 401 y no es un intento de refresh ni login
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (originalRequest.url?.includes("/auth/refresh") || 
-          originalRequest.url?.includes("/auth/login")) {
-        // Si el refresh falla, cerrar sesión y redirigir
-        console.log("🔐 Refresh falló, cerrando sesión...");
-        storage.remove(config.TOKEN_KEY);
-        storage.remove(config.USER_KEY);
-        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          originalRequest.url?.includes("/auth/login") ||
+          originalRequest.url?.includes("/auth/register")) {
+        // Si el refresh falla después de varios intentos, cerrar sesión y redirigir
+        console.log("🔐 Refresh/Login falló, verificando si debemos cerrar sesión...");
+        
+        // Solo cerrar sesión si estamos intentando refresh explícitamente
+        if (originalRequest.url?.includes("/auth/refresh")) {
+          console.log("🔐 Refresh falló definitivamente, cerrando sesión...");
+          storage.remove(config.TOKEN_KEY);
+          storage.remove(config.USER_KEY);
+          document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          if (typeof window !== "undefined") {
+            window.location.href = "/login?reason=session_expired";
+          }
         }
+        
         return Promise.reject(error);
       }
 
@@ -129,18 +136,33 @@ api.interceptors.response.use(
 
         // Reintentar la petición original
         return api(originalRequest);
-      } catch (refreshError) {
-        // Si falla el refresh, cerrar sesión
-        console.log("❌ Error renovando sesión, cerrando sesión...", refreshError);
+      } catch (refreshError: any) {
+        // Si falla el refresh, verificar el tipo de error
+        console.log("❌ Error renovando sesión:", refreshError);
         processQueue(refreshError, null);
         isRefreshing = false;
 
-        storage.remove(config.TOKEN_KEY);
-        storage.remove(config.USER_KEY);
-        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        // Solo cerrar sesión si el error es realmente de autenticación
+        // (no por problemas de red u otros errores)
+        const isAuthError = refreshError.response?.status === 401 || 
+                           refreshError.response?.status === 403 ||
+                           refreshError.message?.includes("Unauthorized") ||
+                           refreshError.message?.includes("token") ||
+                           refreshError.message?.includes("expired") ||
+                           refreshError.response?.data?.message?.includes("token") ||
+                           refreshError.response?.data?.message?.includes("expired");
 
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
+        if (isAuthError) {
+          console.log("🔐 Error de autenticación definitivo, cerrando sesión...");
+          storage.remove(config.TOKEN_KEY);
+          storage.remove(config.USER_KEY);
+          document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+          if (typeof window !== "undefined") {
+            window.location.href = "/login?reason=session_expired";
+          }
+        } else {
+          console.log("⚠️ Error de red o temporal, no cerrando sesión. El usuario puede reintentar.");
         }
 
         return Promise.reject(refreshError);

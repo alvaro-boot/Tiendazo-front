@@ -65,7 +65,7 @@ export const useAuth = () => {
     initializeAuth();
   }, []);
 
-  // Configurar renovación proactiva de sesión cada 30 minutos (solo cuando hay usuario)
+  // Configurar renovación proactiva de sesión cada 15 minutos (solo cuando hay usuario)
   useEffect(() => {
     if (!user) {
       return;
@@ -79,13 +79,24 @@ export const useAuth = () => {
           const refreshResult = await authService.refreshSession();
           storage.set(config.TOKEN_KEY, refreshResult.access_token);
           document.cookie = `access_token=${refreshResult.access_token}; path=/; max-age=604800; secure; samesite=strict`;
+          
+          // Actualizar el perfil para asegurar que los datos estén actualizados
+          try {
+            const updatedProfile = await authService.getProfile();
+            setUser(updatedProfile);
+            storage.set(config.USER_KEY, JSON.stringify(updatedProfile));
+          } catch (profileError) {
+            console.warn("⚠️ No se pudo actualizar el perfil, pero la sesión se renovó");
+          }
+          
           console.log("✅ Sesión renovada exitosamente");
         } catch (error) {
           console.error("❌ Error renovando sesión:", error);
-          // Si falla, el interceptor de axios manejará el 401
+          // No cerrar sesión automáticamente, dejar que el interceptor lo maneje
+          // Solo si hay múltiples fallos seguidos
         }
       }
-    }, 30 * 60 * 1000); // Cada 30 minutos
+    }, 15 * 60 * 1000); // Cada 15 minutos (más frecuente para evitar expiración)
 
     return () => {
       clearInterval(refreshInterval);
