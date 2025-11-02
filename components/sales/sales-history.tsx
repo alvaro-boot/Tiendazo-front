@@ -14,24 +14,35 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 export function SalesHistory() {
   const { user } = useAuthContext()
-  const { sales, fetchSales, loading } = useSales(user?.storeId)
+  // Normalizar storeId para usar store.id si storeId no está disponible
+  const storeId = user?.storeId || user?.store?.id
+  const { sales, fetchSales, loading } = useSales(storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
 
   useEffect(() => {
-    if (user?.storeId) {
-      console.log("🔄 Fetching sales for storeId:", user.storeId)
+    if (storeId) {
+      console.log("🔄 Fetching sales for storeId:", storeId)
       fetchSales()
     } else {
-      console.warn("⚠️ No storeId available for user:", user)
+      console.warn("⚠️ No storeId available for user:", {
+        user,
+        storeId,
+        userStoreId: user?.storeId,
+        userStore: user?.store,
+      })
     }
-  }, [fetchSales, user?.storeId])
+  }, [fetchSales, storeId])
 
   // Ya viene filtrado por tienda desde el hook useSales, pero por seguridad filtramos de nuevo
   const filteredSalesByStore = useMemo(() => {
+    const currentStoreId = storeId || user?.storeId || user?.store?.id
+    
     console.log("🔍 Procesando ventas:", {
       total: sales.length,
-      storeId: user?.storeId,
+      storeId: currentStoreId,
+      userStoreId: user?.storeId,
+      userStoreIdFromStore: user?.store?.id,
       sales: sales.map(s => ({
         id: s.id,
         storeId: s.storeId,
@@ -40,15 +51,20 @@ export function SalesHistory() {
       })),
     })
     
-    if (!user?.storeId) {
-      console.warn("⚠️ No storeId, retornando array vacío")
+    if (!currentStoreId) {
+      console.warn("⚠️ No storeId, retornando array vacío", {
+        user,
+        storeId,
+        userStoreId: user?.storeId,
+        userStore: user?.store,
+      })
       return []
     }
     
     const filtered = sales.filter((sale) => {
-      const matches = sale.storeId === user.storeId
+      const matches = sale.storeId === currentStoreId
       if (!matches) {
-        console.log("🔍 Venta filtrada:", { saleId: sale.id, saleStoreId: sale.storeId, userStoreId: user.storeId })
+        console.log("🔍 Venta filtrada:", { saleId: sale.id, saleStoreId: sale.storeId, userStoreId: currentStoreId })
       }
       return matches
     })
@@ -56,7 +72,7 @@ export function SalesHistory() {
     console.log("✅ Ventas filtradas:", {
       total: sales.length,
       filtradas: filtered.length,
-      storeId: user?.storeId,
+      storeId: currentStoreId,
       ventas: filtered.slice(0, 3).map(s => ({
         id: s.id,
         invoiceNumber: s.invoiceNumber,
@@ -68,7 +84,7 @@ export function SalesHistory() {
     })
     
     return filtered
-  }, [sales, user?.storeId])
+  }, [sales, storeId, user?.storeId, user?.store])
 
   const filteredSales = useMemo(() => {
     if (!searchTerm) return filteredSalesByStore
@@ -177,7 +193,7 @@ export function SalesHistory() {
                   <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     <div className="flex flex-col items-center gap-2">
                       <p className="text-sm">No se encontraron ventas</p>
-                      {!user?.storeId && (
+                      {!storeId && (
                         <p className="text-xs text-muted-foreground">Asegúrate de estar asociado a una tienda</p>
                       )}
                     </div>

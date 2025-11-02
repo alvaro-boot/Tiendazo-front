@@ -29,7 +29,9 @@ import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, Filter } from
 
 export default function ReportsPage() {
   const { user } = useAuthContext()
-  const { sales, fetchSales, loading } = useSales(user?.storeId)
+  // Normalizar storeId para usar store.id si storeId no está disponible
+  const storeId = user?.storeId || user?.store?.id
+  const { sales, fetchSales, loading } = useSales(storeId)
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
   const [filteredSales, setFilteredSales] = useState<any[]>([])
@@ -47,16 +49,29 @@ export default function ReportsPage() {
 
   // Cargar ventas al montar y cuando cambien las fechas
   useEffect(() => {
-    if (user?.storeId) {
+    if (storeId && startDate && endDate) {
+      console.log("🔄 Cargando reporte con filtros:", { storeId, startDate, endDate })
       loadSales()
+    } else {
+      console.log("⏳ Esperando datos:", { 
+        hasUser: !!user, 
+        hasStoreId: !!storeId,
+        storeId: storeId,
+        userStoreId: user?.storeId,
+        userStoreIdFromStore: user?.store?.id,
+        hasDates: !!(startDate && endDate) 
+      })
     }
-  }, [user?.storeId, startDate, endDate])
+  }, [storeId, startDate, endDate])
 
   const loadSales = async () => {
     try {
-      const filters: any = { storeId: user?.storeId }
+      const currentStoreId = storeId || user?.storeId || user?.store?.id
+      const filters: any = { storeId: currentStoreId }
       if (startDate) filters.startDate = startDate
       if (endDate) filters.endDate = endDate
+
+      console.log("📤 Filtrando ventas con:", { filters, currentStoreId, userStoreId: user?.storeId, userStore: user?.store })
 
       const salesData = await saleService.getSales(filters)
       setFilteredSales(salesData)

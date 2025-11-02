@@ -29,33 +29,41 @@ export const useAuth = () => {
 
         if (token && userData) {
           // Primero, restaurar el usuario desde localStorage (más rápido, sin llamada API)
-          try {
-            const parsedUser = JSON.parse(userData);
-            if (isMounted) {
-              setUser(parsedUser);
-              setLoading(false);
+            try {
+              const parsedUser = JSON.parse(userData);
+              // Normalizar el usuario para asegurar que storeId esté disponible
+              const normalizedUser = {
+                ...parsedUser,
+                storeId: parsedUser.storeId || parsedUser.store?.id,
+              };
               
-              // Asegurar que la cookie esté sincronizada (30 días)
-              if (typeof document !== "undefined") {
-                document.cookie = `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
+              if (isMounted) {
+                setUser(normalizedUser);
+                setLoading(false);
+                
+                // Asegurar que la cookie esté sincronizada (30 días)
+                if (typeof document !== "undefined") {
+                  document.cookie = `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
+                }
+                
+                // Verificar que el token esté en localStorage
+                const verifyToken = storage.get(config.TOKEN_KEY);
+                if (!verifyToken) {
+                  console.warn("⚠️ Token no encontrado en localStorage, restaurando desde variable");
+                  storage.set(config.TOKEN_KEY, token);
+                }
+                
+                console.log("✅ Usuario restaurado desde localStorage", {
+                  hasUser: !!normalizedUser,
+                  hasToken: !!token,
+                  tokenVerified: !!verifyToken,
+                  storeId: normalizedUser.storeId,
+                  storeIdSource: normalizedUser.storeId ? (parsedUser.storeId ? "directo" : "de store.id") : "ninguno",
+                });
               }
-              
-              // Verificar que el token esté en localStorage
-              const verifyToken = storage.get(config.TOKEN_KEY);
-              if (!verifyToken) {
-                console.warn("⚠️ Token no encontrado en localStorage, restaurando desde variable");
-                storage.set(config.TOKEN_KEY, token);
-              }
-              
-              console.log("✅ Usuario restaurado desde localStorage", {
-                hasUser: !!parsedUser,
-                hasToken: !!token,
-                tokenVerified: !!verifyToken,
-              });
+            } catch (parseError) {
+              console.warn("⚠️ Error parseando datos de usuario:", parseError);
             }
-          } catch (parseError) {
-            console.warn("⚠️ Error parseando datos de usuario:", parseError);
-          }
 
           // Validar el token en segundo plano (sin bloquear la UI)
           // Solo validar si realmente es necesario (primera carga o cada cierto tiempo)
@@ -68,9 +76,14 @@ export const useAuth = () => {
             authService.getProfile()
               .then((profile) => {
                 if (isMounted) {
-                  console.log("✅ Token validado en segundo plano, perfil actualizado:", profile);
-                  setUser(profile);
-                  storage.set(config.USER_KEY, JSON.stringify(profile));
+                  // Normalizar el usuario para asegurar que storeId esté disponible
+                  const normalizedProfile = {
+                    ...profile,
+                    storeId: profile.storeId || profile.store?.id,
+                  };
+                  console.log("✅ Token validado en segundo plano, perfil actualizado:", normalizedProfile);
+                  setUser(normalizedProfile);
+                  storage.set(config.USER_KEY, JSON.stringify(normalizedProfile));
                   storage.set("last_token_validation", now.toString());
                 }
               })
@@ -179,6 +192,18 @@ export const useAuth = () => {
       const data = await authService.login(credentials);
       console.log("✅ Login exitoso:", data);
 
+      // Normalizar el usuario para asegurar que storeId esté disponible
+      const normalizedUser = {
+        ...data.user,
+        storeId: data.user.storeId || data.user.store?.id,
+      };
+      
+      console.log("👤 Usuario normalizado:", {
+        storeId: normalizedUser.storeId,
+        hasStore: !!data.user.store,
+        storeIdSource: normalizedUser.storeId ? (data.user.storeId ? "directo" : "de store.id") : "ninguno",
+      });
+
       // Guardar en localStorage PRIMERO
       console.log("💾 Guardando token:", {
         tokenPreview: data.access_token ? `${data.access_token.substring(0, 10)}...` : null,
@@ -186,7 +211,7 @@ export const useAuth = () => {
       });
       
       storage.set(config.TOKEN_KEY, data.access_token);
-      storage.set(config.USER_KEY, JSON.stringify(data.user));
+      storage.set(config.USER_KEY, JSON.stringify(normalizedUser));
 
       // También guardar en cookies para el middleware (30 días)
       if (typeof document !== "undefined") {
@@ -201,7 +226,7 @@ export const useAuth = () => {
         tokenPreview: savedToken ? `${savedToken.substring(0, 10)}...` : null,
       });
 
-      setUser(data.user);
+      setUser(normalizedUser);
 
       return data;
     } catch (error: any) {

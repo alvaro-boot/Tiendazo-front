@@ -8,9 +8,14 @@ export interface User {
   fullName: string;
   email: string;
   role: "ADMIN" | "EMPLOYEE";
-  storeId?: number; // ID de la tienda asociada
-  createdAt: string;
-  updatedAt: string;
+  storeId?: number; // ID de la tienda asociada (normalizado)
+  store?: { // Objeto store completo del backend
+    id: number;
+    name: string;
+    [key: string]: any;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoginCredentials {
