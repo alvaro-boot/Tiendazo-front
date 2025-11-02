@@ -34,21 +34,21 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
     }
 
     try {
-      if (editingCategory) {
+    if (editingCategory) {
         await updateCategory(editingCategory.id, { name, description, storeId: user.storeId })
-        setEditingCategory(null)
+      setEditingCategory(null)
         await fetchCategories()
-      } else {
+    } else {
         await createCategory({ 
-          name, 
-          description, 
+        name,
+        description,
           storeId: user.storeId 
         })
         await fetchCategories()
-      }
+    }
 
-      setName("")
-      setDescription("")
+    setName("")
+    setDescription("")
     } catch (error: any) {
       console.error("❌ Error al guardar categoría:", error);
       alert(`Error al guardar categoría: ${error.message || "Error desconocido"}`);
@@ -153,7 +153,7 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
                     <div className="flex-1">
                       <p className="font-semibold text-base">{category.name}</p>
                       <p className="text-sm text-muted-foreground mt-1">{category.description || "Sin descripción"}</p>
-                    </div>
+                  </div>
                     <div className="flex gap-2 ml-4">
                       <Button 
                         variant="ghost" 
@@ -161,18 +161,18 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
                         onClick={() => handleEdit(category)}
                         className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
                       >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleDelete(category.id)}
                         className="hover:bg-destructive/10 hover:text-destructive transition-all hover:scale-110"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
+                </div>
                 ))
               )}
             </div>

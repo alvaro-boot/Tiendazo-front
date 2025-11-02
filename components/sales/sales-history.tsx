@@ -14,13 +14,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 export function SalesHistory() {
   const { user } = useAuthContext()
-  const { sales, fetchSales, loading } = useSales()
+  const { sales, fetchSales, loading } = useSales(user?.storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
 
   useEffect(() => {
-    fetchSales()
-  }, [fetchSales])
+    if (user?.storeId) {
+      fetchSales()
+    }
+  }, [fetchSales, user?.storeId])
 
   // Filtrar ventas por tienda del usuario
   const filteredSalesByStore = useMemo(() => {

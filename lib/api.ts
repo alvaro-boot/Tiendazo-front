@@ -12,19 +12,35 @@ const api = axios.create({
 
 // Interceptor para agregar token automáticamente
 api.interceptors.request.use(
-  (config) => {
-    const token = storage.get(config.TOKEN_KEY);
-    console.log("📤 Enviando request a:", config.url, {
+  (requestConfig) => {
+    // Intentar obtener el token de múltiples fuentes
+    let token = storage.get(config.TOKEN_KEY);
+    
+    // Si no hay token en localStorage, intentar obtenerlo de la cookie
+    if (!token && typeof document !== "undefined") {
+      const cookies = document.cookie.split(";");
+      const tokenCookie = cookies.find(c => c.trim().startsWith("access_token="));
+      if (tokenCookie) {
+        token = tokenCookie.split("=")[1];
+        // Guardar en localStorage para próximas requests
+        if (token) {
+          storage.set(config.TOKEN_KEY, token);
+        }
+      }
+    }
+
+    console.log("📤 Enviando request a:", requestConfig.url, {
       hasToken: !!token,
       tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+      tokenSource: token ? (storage.get(config.TOKEN_KEY) ? "localStorage" : "cookie") : "none",
     });
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      requestConfig.headers.Authorization = `Bearer ${token}`;
     } else {
-      console.warn("⚠️ No hay token disponible para la request");
+      console.warn("⚠️ No hay token disponible para la request:", requestConfig.url);
     }
-    return config;
+    return requestConfig;
   },
   (error) => {
     return Promise.reject(error);
@@ -94,13 +110,31 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const token = storage.get(config.TOKEN_KEY);
+        // Intentar obtener el token de múltiples fuentes (igual que en el interceptor de request)
+        let token = storage.get(config.TOKEN_KEY);
+        
+        // Si no hay token en localStorage, intentar de la cookie
+        if (!token && typeof document !== "undefined") {
+          const cookies = document.cookie.split(";");
+          const tokenCookie = cookies.find(c => c.trim().startsWith("access_token="));
+          if (tokenCookie) {
+            token = tokenCookie.split("=")[1];
+            if (token) {
+              storage.set(config.TOKEN_KEY, token);
+            }
+          }
+        }
+        
         if (!token) {
           throw new Error("No token available");
         }
 
         // Intentar renovar la sesión usando la instancia de api para evitar loops
-        console.log("🔄 Intentando renovar sesión...");
+        console.log("🔄 Intentando renovar sesión...", {
+          hasToken: !!token,
+          tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+        });
+        
         const axiosInstance = axios.create({
           baseURL: config.API_BASE_URL,
           timeout: 10000,
@@ -117,9 +151,13 @@ api.interceptors.response.use(
 
         const { access_token } = refreshResponse.data;
 
-        // Guardar nuevo token (30 días)
+        // Guardar nuevo token (30 días) en múltiples lugares
         storage.set(config.TOKEN_KEY, access_token);
-        document.cookie = `access_token=${access_token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
+        if (typeof document !== "undefined") {
+          document.cookie = `access_token=${access_token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
+        }
+        
+        console.log("✅ Token renovado y guardado");
 
         // Actualizar el header de la petición original
         originalRequest.headers.Authorization = `Bearer ${access_token}`;

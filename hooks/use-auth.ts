@@ -36,8 +36,22 @@ export const useAuth = () => {
               setLoading(false);
               
               // Asegurar que la cookie esté sincronizada (30 días)
-              document.cookie = `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
-              console.log("✅ Usuario restaurado desde localStorage");
+              if (typeof document !== "undefined") {
+                document.cookie = `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
+              }
+              
+              // Verificar que el token esté en localStorage
+              const verifyToken = storage.get(config.TOKEN_KEY);
+              if (!verifyToken) {
+                console.warn("⚠️ Token no encontrado en localStorage, restaurando desde variable");
+                storage.set(config.TOKEN_KEY, token);
+              }
+              
+              console.log("✅ Usuario restaurado desde localStorage", {
+                hasUser: !!parsedUser,
+                hasToken: !!token,
+                tokenVerified: !!verifyToken,
+              });
             }
           } catch (parseError) {
             console.warn("⚠️ Error parseando datos de usuario:", parseError);
@@ -165,13 +179,27 @@ export const useAuth = () => {
       const data = await authService.login(credentials);
       console.log("✅ Login exitoso:", data);
 
-      // Guardar en localStorage
+      // Guardar en localStorage PRIMERO
+      console.log("💾 Guardando token:", {
+        tokenPreview: data.access_token ? `${data.access_token.substring(0, 10)}...` : null,
+        hasToken: !!data.access_token,
+      });
+      
       storage.set(config.TOKEN_KEY, data.access_token);
       storage.set(config.USER_KEY, JSON.stringify(data.user));
 
       // También guardar en cookies para el middleware (30 días)
-      document.cookie = `access_token=${data.access_token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
-      console.log("💾 Token guardado en localStorage y cookies");
+      if (typeof document !== "undefined") {
+        document.cookie = `access_token=${data.access_token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
+      }
+      
+      // Verificar que se guardó correctamente
+      const savedToken = storage.get(config.TOKEN_KEY);
+      console.log("✅ Token guardado:", {
+        saved: !!savedToken,
+        matches: savedToken === data.access_token,
+        tokenPreview: savedToken ? `${savedToken.substring(0, 10)}...` : null,
+      });
 
       setUser(data.user);
 

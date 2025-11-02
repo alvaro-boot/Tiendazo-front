@@ -271,15 +271,25 @@ export const useSales = (storeId?: number) => {
     try {
       setLoading(true);
       setError(null);
+      console.log("🛒 Obteniendo ventas, storeId:", storeId);
       const data = await saleService.getSales(storeId ? { storeId } : undefined);
+      console.log("✅ Ventas obtenidas:", data.length);
       setSales(data);
-    } catch (err) {
+    } catch (err: any) {
+      console.error("❌ Error obteniendo ventas:", err);
       const errorMessage = handleApiError(err);
       setError(errorMessage.message);
+      setSales([]); // Asegurar que sales sea un array vacío en caso de error
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (storeId !== undefined) {
+      fetchSales();
+    }
+  }, [storeId]);
 
   const createSale = async (saleData: SaleData) => {
     try {

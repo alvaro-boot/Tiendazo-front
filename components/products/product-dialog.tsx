@@ -95,11 +95,11 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
         storeId: user.storeId,
       };
 
-      if (product) {
+    if (product) {
         console.log("📝 Actualizando producto:", product.id);
         await updateProduct(product.id, productData);
         console.log("✅ Producto actualizado exitosamente");
-      } else {
+    } else {
         console.log("➕ Creando nuevo producto");
         await createProduct(productData);
         console.log("✅ Producto creado exitosamente");
@@ -150,8 +150,8 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
                   ) : (
                     categories.map((category) => (
                       <SelectItem key={category.id} value={String(category.id)}>
-                        {category.name}
-                      </SelectItem>
+                      {category.name}
+                    </SelectItem>
                     ))
                   )}
                 </SelectContent>
@@ -173,7 +173,7 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
             />
           </div>
 
-          <div className="space-y-2">
+            <div className="space-y-2">
             <Label htmlFor="barcode" className="font-semibold">Código de Barras</Label>
             <Input 
               id="barcode" 
