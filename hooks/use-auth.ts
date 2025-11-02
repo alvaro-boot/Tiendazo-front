@@ -33,8 +33,8 @@ export const useAuth = () => {
             setUser(profile);
             storage.set(config.USER_KEY, JSON.stringify(profile));
             
-            // Asegurar que la cookie esté sincronizada
-            document.cookie = `access_token=${token}; path=/; max-age=604800; secure; samesite=strict`;
+            // Asegurar que la cookie esté sincronizada (30 días)
+            document.cookie = `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
           } catch (profileError) {
             // Si falla la validación del token, limpiar localStorage
             console.log("⚠️ Token inválido o vencido, limpiando datos:", profileError);
@@ -65,11 +65,14 @@ export const useAuth = () => {
     initializeAuth();
   }, []);
 
-  // Configurar renovación proactiva de sesión cada 15 minutos (solo cuando hay usuario)
+  // Configurar renovación proactiva de sesión cada 10 minutos (solo cuando hay usuario)
   useEffect(() => {
     if (!user) {
       return;
     }
+
+    let consecutiveFailures = 0;
+    const MAX_CONSECUTIVE_FAILURES = 3;
 
     const refreshInterval = setInterval(async () => {
       const token = storage.get(config.TOKEN_KEY);
@@ -78,7 +81,8 @@ export const useAuth = () => {
           console.log("🔄 Renovando sesión proactivamente...");
           const refreshResult = await authService.refreshSession();
           storage.set(config.TOKEN_KEY, refreshResult.access_token);
-          document.cookie = `access_token=${refreshResult.access_token}; path=/; max-age=604800; secure; samesite=strict`;
+          // Actualizar cookie con expiración de 30 días
+          document.cookie = `access_token=${refreshResult.access_token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
           
           // Actualizar el perfil para asegurar que los datos estén actualizados
           try {
@@ -89,14 +93,25 @@ export const useAuth = () => {
             console.warn("⚠️ No se pudo actualizar el perfil, pero la sesión se renovó");
           }
           
+          consecutiveFailures = 0; // Resetear contador de fallos
           console.log("✅ Sesión renovada exitosamente");
         } catch (error) {
-          console.error("❌ Error renovando sesión:", error);
-          // No cerrar sesión automáticamente, dejar que el interceptor lo maneje
-          // Solo si hay múltiples fallos seguidos
+          consecutiveFailures++;
+          console.error(`❌ Error renovando sesión (intento ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, error);
+          
+          // Solo cerrar sesión si hay múltiples fallos consecutivos de autenticación
+          const isAuthError = error?.response?.status === 401 || 
+                             error?.response?.status === 403 ||
+                             error?.message?.includes("Unauthorized") ||
+                             error?.message?.includes("expired");
+          
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES && isAuthError) {
+            console.error("❌ Múltiples fallos de autenticación al renovar sesión, cerrando sesión...");
+            logout();
+          }
         }
       }
-    }, 15 * 60 * 1000); // Cada 15 minutos (más frecuente para evitar expiración)
+    }, 10 * 60 * 1000); // Cada 10 minutos (más frecuente para evitar expiración)
 
     return () => {
       clearInterval(refreshInterval);
@@ -115,8 +130,8 @@ export const useAuth = () => {
       storage.set(config.TOKEN_KEY, data.access_token);
       storage.set(config.USER_KEY, JSON.stringify(data.user));
 
-      // También guardar en cookies para el middleware
-      document.cookie = `access_token=${data.access_token}; path=/; max-age=86400; secure; samesite=strict`; // 24 horas
+      // También guardar en cookies para el middleware (30 días)
+      document.cookie = `access_token=${data.access_token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
       console.log("💾 Token guardado en localStorage y cookies");
 
       setUser(data.user);

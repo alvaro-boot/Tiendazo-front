@@ -122,9 +122,9 @@ api.interceptors.response.use(
 
         const { access_token } = refreshResponse.data;
 
-        // Guardar nuevo token
+        // Guardar nuevo token (30 días)
         storage.set(config.TOKEN_KEY, access_token);
-        document.cookie = `access_token=${access_token}; path=/; max-age=604800; secure; samesite=strict`;
+        document.cookie = `access_token=${access_token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
 
         // Actualizar el header de la petición original
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
