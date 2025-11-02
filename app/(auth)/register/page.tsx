@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function RegisterPage() {
-  const { isAdmin, isAuthenticated, loading } = useAuthContext();
+  const { isAdmin, isAuthenticated, loading, user } = useAuthContext();
 
   // Mostrar loading mientras se carga el contexto
   if (loading) {
@@ -26,8 +26,9 @@ export default function RegisterPage() {
     );
   }
 
-  // Si está autenticado, mostrar mensaje de error
-  if (isAuthenticated) {
+  // Si está autenticado Y NO es admin, mostrar mensaje de error
+  // Si es admin, puede registrar otros administradores desde aquí
+  if (isAuthenticated && !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -40,8 +41,8 @@ export default function RegisterPage() {
           <CardContent>
             <Alert>
               <AlertDescription>
-                Ya tienes una cuenta registrada. Solo puedes registrar
-                administradores desde aquí.
+                Ya tienes una cuenta registrada. Solo los administradores pueden registrar
+                nuevos administradores desde aquí.
               </AlertDescription>
             </Alert>
             <div className="mt-4">
@@ -58,14 +59,18 @@ export default function RegisterPage() {
     );
   }
 
-  // Permitir acceso solo si no está autenticado (registro inicial de administrador)
+  // Permitir acceso si:
+  // - No está autenticado (registro inicial de administrador)
+  // - Está autenticado Y es admin (puede registrar otros administradores)
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-balance mb-2">Tiendazo</h1>
           <p className="text-muted-foreground">
-            Registro de Administrador - Configura tu cuenta y tienda
+            {isAdmin 
+              ? "Registro de Administrador - Registrar nuevo administrador"
+              : "Registro de Administrador - Configura tu cuenta y tienda"}
           </p>
         </div>
         <RegisterForm />

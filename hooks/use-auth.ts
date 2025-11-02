@@ -26,12 +26,23 @@ export const useAuth = () => {
         });
 
         if (token && userData) {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-          console.log("✅ Usuario cargado desde localStorage:", parsedUser);
-          
-          // Asegurar que la cookie esté sincronizada
-          document.cookie = `access_token=${token}; path=/; max-age=86400; secure; samesite=strict`;
+          // Intentar validar el token verificando el perfil del usuario
+          try {
+            const profile = await authService.getProfile();
+            console.log("✅ Token válido, usuario autenticado:", profile);
+            setUser(profile);
+            storage.set(config.USER_KEY, JSON.stringify(profile));
+            
+            // Asegurar que la cookie esté sincronizada
+            document.cookie = `access_token=${token}; path=/; max-age=86400; secure; samesite=strict`;
+          } catch (profileError) {
+            // Si falla la validación del token, limpiar localStorage
+            console.log("⚠️ Token inválido o vencido, limpiando datos:", profileError);
+            storage.remove(config.TOKEN_KEY);
+            storage.remove(config.USER_KEY);
+            document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            setUser(null);
+          }
         } else {
           console.log("🔍 No hay datos de autenticación almacenados");
           setUser(null);
@@ -53,7 +64,7 @@ export const useAuth = () => {
     try {
       setLoading(true);
       console.log("🔐 Iniciando sesión con:", credentials.username);
-      
+
       const data = await authService.login(credentials);
       console.log("✅ Login exitoso:", data);
 
