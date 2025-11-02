@@ -74,35 +74,46 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Header mejorado */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Productos</h1>
-          <p className="text-muted-foreground">Gestiona tu inventario de productos</p>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            Productos
+          </h1>
+          <p className="text-muted-foreground mt-2">Gestiona tu inventario de productos</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsCategoryDialogOpen(true)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsCategoryDialogOpen(true)}
+            className="transition-all hover:scale-105"
+          >
             Categorías
           </Button>
-          <Button onClick={handleAddNew}>
+          <Button 
+            onClick={handleAddNew}
+            className="bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Nuevo Producto
           </Button>
         </div>
       </div>
 
-      <div className="flex gap-4">
+      {/* Filtros mejorados */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre, SKU o código de barras..."
+            placeholder="Buscar por nombre o código de barras..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-11 border-2 focus:border-primary transition-colors"
           />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[220px] h-11 border-2">
             <SelectValue placeholder="Todas las categorías" />
           </SelectTrigger>
           <SelectContent>
@@ -116,7 +127,8 @@ export default function ProductsPage() {
         </Select>
       </div>
 
-      <div className="rounded-lg border bg-card">
+      {/* Tabla mejorada */}
+      <div className="rounded-xl border-2 bg-card shadow-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -167,10 +179,20 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(product)}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEdit(product)}
+                          className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(product.id)}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDelete(product.id)}
+                          className="hover:bg-destructive/10 hover:text-destructive transition-all hover:scale-110"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

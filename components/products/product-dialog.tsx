@@ -39,9 +39,16 @@ interface ProductFormData {
 
 export function ProductDialog({ product, open, onOpenChange }: ProductDialogProps) {
   const { user } = useAuthContext();
-  const { categories } = useCategories(user?.storeId);
+  const { categories, loading: categoriesLoading, refetch: fetchCategories } = useCategories(user?.storeId);
   const { createProduct, updateProduct, fetchProducts } = useProducts(user?.storeId);
   const { register, handleSubmit, reset, setValue, watch } = useForm<ProductFormData>()
+
+  // Cargar categorías cuando se abre el diálogo
+  useEffect(() => {
+    if (open && user?.storeId) {
+      fetchCategories();
+    }
+  }, [open, user?.storeId, fetchCategories])
 
   useEffect(() => {
     if (product) {
@@ -108,90 +115,138 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{product ? "Editar Producto" : "Nuevo Producto"}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4 border-b">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            {product ? "Editar Producto" : "Nuevo Producto"}
+          </DialogTitle>
+          <DialogDescription className="text-base mt-2">
             {product ? "Actualiza la información del producto" : "Agrega un nuevo producto al inventario"}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre *</Label>
-              <Input id="name" {...register("name", { required: true })} />
+              <Label htmlFor="name" className="font-semibold">Nombre *</Label>
+              <Input 
+                id="name" 
+                {...register("name", { required: true })} 
+                className="h-11 border-2 focus:border-primary transition-colors"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="categoryId">Categoría *</Label>
+              <Label htmlFor="categoryId" className="font-semibold">Categoría *</Label>
               <Select value={String(watch("categoryId") || "")} onValueChange={(value) => setValue("categoryId", Number(value))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una categoría" />
+                <SelectTrigger className="h-11 border-2 focus:border-primary">
+                  <SelectValue placeholder={categoriesLoading ? "Cargando categorías..." : categories.length === 0 ? "No hay categorías. Crea una primero." : "Selecciona una categoría"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={String(category.id)}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
+                  {categoriesLoading ? (
+                    <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
+                  ) : categories.length === 0 ? (
+                    <SelectItem value="no-categories" disabled>No hay categorías disponibles</SelectItem>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={String(category.id)}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
+              {categories.length === 0 && !categoriesLoading && (
+                <p className="text-xs text-muted-foreground">
+                  Ve a la página de productos y haz clic en "Categorías" para crear una categoría primero.
+                </p>
+              )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
-            <Textarea id="description" {...register("description")} />
+            <Label htmlFor="description" className="font-semibold">Descripción</Label>
+            <Textarea 
+              id="description" 
+              {...register("description")} 
+              className="border-2 focus:border-primary transition-colors min-h-[100px]"
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="barcode">Código de Barras</Label>
-            <Input id="barcode" {...register("barcode")} />
+            <Label htmlFor="barcode" className="font-semibold">Código de Barras</Label>
+            <Input 
+              id="barcode" 
+              {...register("barcode")} 
+              className="h-11 border-2 focus:border-primary transition-colors"
+            />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="purchasePrice">Precio de Compra *</Label>
+              <Label htmlFor="purchasePrice" className="font-semibold">Precio de Compra *</Label>
               <Input
                 id="purchasePrice"
                 type="number"
                 step="0.01"
                 {...register("purchasePrice", { required: true, valueAsNumber: true })}
+                className="h-11 border-2 focus:border-primary transition-colors"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sellPrice">Precio de Venta *</Label>
+              <Label htmlFor="sellPrice" className="font-semibold">Precio de Venta *</Label>
               <Input
                 id="sellPrice"
                 type="number"
                 step="0.01"
                 {...register("sellPrice", { required: true, valueAsNumber: true })}
+                className="h-11 border-2 focus:border-primary transition-colors"
               />
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="stock">Stock Inicial</Label>
-              <Input id="stock" type="number" {...register("stock", { valueAsNumber: true })} disabled={!!product} />
+              <Label htmlFor="stock" className="font-semibold">Stock Inicial</Label>
+              <Input 
+                id="stock" 
+                type="number" 
+                {...register("stock", { valueAsNumber: true })} 
+                disabled={!!product}
+                className="h-11 border-2 focus:border-primary transition-colors disabled:opacity-50"
+              />
               {product && (
                 <p className="text-xs text-muted-foreground">Usa el botón de ajuste de stock para modificar</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="minStock">Stock Mínimo *</Label>
-              <Input id="minStock" type="number" {...register("minStock", { required: true, valueAsNumber: true })} />
+              <Label htmlFor="minStock" className="font-semibold">Stock Mínimo *</Label>
+              <Input 
+                id="minStock" 
+                type="number" 
+                {...register("minStock", { required: true, valueAsNumber: true })} 
+                className="h-11 border-2 focus:border-primary transition-colors"
+              />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-2 pt-4 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="transition-all hover:scale-105"
+            >
               Cancelar
             </Button>
-            <Button type="submit">{product ? "Actualizar" : "Crear"} Producto</Button>
+            <Button 
+              type="submit"
+              className="bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            >
+              {product ? "Actualizar" : "Crear"} Producto
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

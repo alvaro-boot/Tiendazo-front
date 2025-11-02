@@ -50,109 +50,141 @@ export function Dashboard() {
 
   // Dashboard para usuarios autenticados
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Bienvenido, {user?.fullName || user?.username}
-        </p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header con bienvenida */}
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-8 shadow-lg">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        <div className="relative">
+          <h1 className="text-4xl font-bold tracking-tight mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            Bienvenido de vuelta
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            {user?.fullName || user?.username}
+            {isAdmin && (
+              <Badge className="ml-3 bg-gradient-to-r from-primary to-primary/80">
+                Administrador
+              </Badge>
+            )}
+          </p>
+        </div>
       </div>
 
-      {/* Estadísticas básicas */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      {/* Estadísticas mejoradas */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Estado</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <div className="rounded-full bg-green-500/10 p-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">Activo</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-3xl font-bold text-green-600">Activo</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Sistema funcionando correctamente
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Usuario</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-full bg-blue-500/10 p-2">
+              <Users className="h-5 w-5 text-blue-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{user?.username}</div>
-            <p className="text-xs text-muted-foreground">
-              <Badge variant={isAdmin ? "default" : "secondary"}>
+            <div className="text-3xl font-bold truncate">{user?.username}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <Badge variant={isAdmin ? "default" : "secondary"} className="mt-1">
                 {isAdmin ? "Administrador" : "Empleado"}
               </Badge>
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">API</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-full bg-purple-500/10 p-2">
+              <TrendingUp className="h-5 w-5 text-purple-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">Online</div>
-            <p className="text-xs text-muted-foreground">Conectado a la API</p>
+            <div className="text-3xl font-bold text-green-600">Online</div>
+            <p className="text-xs text-muted-foreground mt-1">Conectado a la API</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sesión</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <div className="rounded-full bg-orange-500/10 p-2">
+              <Package className="h-5 w-5 text-orange-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">Activa</div>
-            <p className="text-xs text-muted-foreground">Token válido</p>
+            <div className="text-3xl font-bold text-green-600">Activa</div>
+            <p className="text-xs text-muted-foreground mt-1">Token válido</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Enlaces rápidos */}
-      <Card>
+      {/* Enlaces rápidos mejorados */}
+      <Card className="border-2 shadow-lg">
         <CardHeader>
-          <CardTitle>Acceso Rápido</CardTitle>
+          <CardTitle className="text-xl">Acceso Rápido</CardTitle>
+          <p className="text-sm text-muted-foreground">Navega rápidamente a las secciones principales</p>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Link href="/dashboard/products">
               <Button
                 variant="outline"
-                className="w-full h-20 flex flex-col gap-2"
+                className="group w-full h-24 flex flex-col gap-3 border-2 transition-all duration-300 hover:border-primary hover:shadow-lg hover:scale-105 hover:bg-primary/5"
               >
-                <Package className="h-6 w-6" />
-                <span>Productos</span>
+                <div className="rounded-full bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
+                  <Package className="h-6 w-6 text-primary" />
+                </div>
+                <span className="font-semibold">Productos</span>
               </Button>
             </Link>
             <Link href="/dashboard/sales">
               <Button
                 variant="outline"
-                className="w-full h-20 flex flex-col gap-2"
+                className="group w-full h-24 flex flex-col gap-3 border-2 transition-all duration-300 hover:border-primary hover:shadow-lg hover:scale-105 hover:bg-primary/5"
               >
-                <ShoppingCart className="h-6 w-6" />
-                <span>Ventas</span>
+                <div className="rounded-full bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
+                  <ShoppingCart className="h-6 w-6 text-primary" />
+                </div>
+                <span className="font-semibold">Ventas</span>
               </Button>
             </Link>
             <Link href="/dashboard/clients">
               <Button
                 variant="outline"
-                className="w-full h-20 flex flex-col gap-2"
+                className="group w-full h-24 flex flex-col gap-3 border-2 transition-all duration-300 hover:border-primary hover:shadow-lg hover:scale-105 hover:bg-primary/5"
               >
-                <Users className="h-6 w-6" />
-                <span>Clientes</span>
+                <div className="rounded-full bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <span className="font-semibold">Clientes</span>
               </Button>
             </Link>
             {isAdmin && (
               <Link href="/register-employee">
                 <Button
                   variant="outline"
-                  className="w-full h-20 flex flex-col gap-2"
+                  className="group w-full h-24 flex flex-col gap-3 border-2 transition-all duration-300 hover:border-primary hover:shadow-lg hover:scale-105 hover:bg-primary/5"
                 >
-                  <Users className="h-6 w-6" />
-                  <span>Registrar Empleado</span>
+                  <div className="rounded-full bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="font-semibold">Registrar Empleado</span>
                 </Button>
               </Link>
             )}

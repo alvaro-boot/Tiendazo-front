@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { categoryService, Category, CategoryData } from "@/lib/services";
 
 export function useCategories(storeId?: number) {
@@ -6,18 +6,28 @@ export function useCategories(storeId?: number) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
+    if (!storeId) {
+      setLoading(false);
+      setCategories([]);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      console.log("🔍 Cargando categorías para tienda:", storeId);
       const data = await categoryService.getCategories(storeId);
-      setCategories(data);
+      console.log("✅ Categorías cargadas:", data);
+      setCategories(data || []);
     } catch (err: any) {
+      console.error("❌ Error cargando categorías:", err);
       setError(err.message || "Error al cargar categorías");
+      setCategories([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [storeId]);
 
   const createCategory = async (categoryData: CategoryData): Promise<Category> => {
     try {
@@ -53,7 +63,7 @@ export function useCategories(storeId?: number) {
 
   useEffect(() => {
     fetchCategories();
-  }, [storeId]);
+  }, [fetchCategories]);
 
   return {
     categories,
@@ -62,6 +72,7 @@ export function useCategories(storeId?: number) {
     createCategory,
     updateCategory,
     deleteCategory,
+    fetchCategories,
     refetch: fetchCategories,
   };
 }

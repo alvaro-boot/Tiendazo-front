@@ -1,92 +1,112 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { useStore } from "@/lib/store"
+import { useState, useMemo, useEffect } from "react"
+import { useSales } from "@/hooks/use-api"
+import { useAuthContext } from "@/lib/auth-context"
+import { Sale } from "@/lib/services"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, Eye } from "lucide-react"
+import { Search, Eye, ShoppingCart, TrendingUp, DollarSign } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import type { Sale } from "@/lib/store"
 
 export function SalesHistory() {
-  const { sales } = useStore()
+  const { user } = useAuthContext()
+  const { sales, fetchSales, loading } = useSales()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
 
+  useEffect(() => {
+    fetchSales()
+  }, [fetchSales])
+
+  // Filtrar ventas por tienda del usuario
+  const filteredSalesByStore = useMemo(() => {
+    if (!user?.storeId) return []
+    return sales.filter((sale) => sale.storeId === user.storeId)
+  }, [sales, user?.storeId])
+
   const filteredSales = useMemo(() => {
-    return sales.filter(
+    if (!searchTerm) return filteredSalesByStore
+    return filteredSalesByStore.filter(
       (sale) =>
-        sale.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sale.id.toLowerCase().includes(searchTerm.toLowerCase()),
+        sale.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.id.toString().includes(searchTerm),
     )
-  }, [sales, searchTerm])
+  }, [filteredSalesByStore, searchTerm])
 
   const totalRevenue = useMemo(() => {
-    return sales.reduce((sum, sale) => sum + sale.total, 0)
-  }, [sales])
+    return filteredSalesByStore.reduce((sum, sale) => sum + Number(sale.total), 0)
+  }, [filteredSalesByStore])
 
   const totalProfit = useMemo(() => {
-    return sales.reduce((sum, sale) => {
-      const profit = sale.items.reduce((p, item) => p + (item.price - item.cost) * item.quantity, 0)
-      return sum + profit
-    }, 0)
-  }, [sales])
-
-  const getPaymentMethodBadge = (method: string) => {
-    const variants: Record<string, "default" | "secondary" | "outline"> = {
-      cash: "default",
-      card: "secondary",
-      transfer: "outline",
-      fiado: "outline",
-    }
-    return variants[method] || "default"
-  }
+    return filteredSalesByStore.reduce((sum, sale) => sum + Number(sale.profit || 0), 0)
+  }, [filteredSalesByStore])
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Cards de estadísticas mejoradas */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Ventas</CardTitle>
+            <div className="rounded-full bg-blue-500/10 p-2">
+              <ShoppingCart className="h-5 w-5 text-blue-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{sales.length}</p>
+            <p className="text-3xl font-bold">{filteredSalesByStore.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">Ventas registradas</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+            <div className="rounded-full bg-green-500/10 p-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Ingresos acumulados</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ganancia Total</CardTitle>
+            <div className="rounded-full bg-purple-500/10 p-2">
+              <DollarSign className="h-5 w-5 text-purple-500" />
+            </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">${totalProfit.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-green-600">${totalProfit.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground mt-1">Ganancia neta</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      {/* Card de historial mejorado */}
+      <Card className="border-2 shadow-lg">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Historial de Ventas</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-xl">Historial de Ventas</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Busca y visualiza todas tus ventas</p>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar ventas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-11 border-2 focus:border-primary transition-colors"
               />
             </div>
           </div>
@@ -110,20 +130,34 @@ export function SalesHistory() {
                     No se encontraron ventas
                   </TableCell>
                 </TableRow>
+              ) : loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    Cargando ventas...
+                  </TableCell>
+                </TableRow>
               ) : (
                 filteredSales.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell className="font-mono text-sm">{sale.id.slice(0, 12)}...</TableCell>
-                    <TableCell>{sale.clientName}</TableCell>
-                    <TableCell>{new Date(sale.createdAt).toLocaleString("es-ES")}</TableCell>
+                  <TableRow key={sale.id} className="hover:bg-muted/50 transition-colors border-b">
+                    <TableCell className="font-mono text-sm font-semibold">{sale.invoiceNumber}</TableCell>
+                    <TableCell className="font-medium">{sale.client?.fullName || "Cliente general"}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(sale.createdAt).toLocaleString("es-ES")}</TableCell>
                     <TableCell>
-                      <Badge variant={getPaymentMethodBadge(sale.paymentMethod)} className="capitalize">
-                        {sale.paymentMethod}
+                      <Badge 
+                        variant={sale.isCredit ? "outline" : "default"}
+                        className={sale.isCredit ? "border-amber-500 text-amber-700 dark:text-amber-400" : ""}
+                      >
+                        {sale.isCredit ? "Fiado" : "Contado"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-medium">${sale.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-bold text-lg text-primary">${Number(sale.total).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedSale(sale)}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setSelectedSale(sale)}
+                        className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -139,7 +173,7 @@ export function SalesHistory() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Detalle de Venta</DialogTitle>
-            <DialogDescription>ID: {selectedSale?.id}</DialogDescription>
+            <DialogDescription>Factura: {selectedSale?.invoiceNumber}</DialogDescription>
           </DialogHeader>
 
           {selectedSale && (
@@ -147,57 +181,63 @@ export function SalesHistory() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <p className="text-sm text-muted-foreground">Cliente</p>
-                  <p className="font-medium">{selectedSale.clientName}</p>
+                  <p className="font-medium">{selectedSale.client?.fullName || "Cliente general"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Fecha</p>
                   <p className="font-medium">{new Date(selectedSale.createdAt).toLocaleString("es-ES")}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Método de Pago</p>
-                  <Badge variant={getPaymentMethodBadge(selectedSale.paymentMethod)} className="capitalize">
-                    {selectedSale.paymentMethod}
+                  <p className="text-sm text-muted-foreground">Tipo de Venta</p>
+                  <Badge variant={selectedSale.isCredit ? "outline" : "default"}>
+                    {selectedSale.isCredit ? "Fiado" : "Contado"}
                   </Badge>
                 </div>
+                {selectedSale.profit && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ganancia</p>
+                    <p className="font-medium text-green-600">${Number(selectedSale.profit).toFixed(2)}</p>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <p className="mb-2 font-medium">Productos</p>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Producto</TableHead>
-                      <TableHead className="text-center">Cantidad</TableHead>
-                      <TableHead className="text-right">Precio</TableHead>
-                      <TableHead className="text-right">Subtotal</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedSale.items.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.productName}</TableCell>
-                        <TableCell className="text-center">{item.quantity}</TableCell>
-                        <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${item.subtotal.toFixed(2)}</TableCell>
+              {selectedSale.details && selectedSale.details.length > 0 && (
+                <div>
+                  <p className="mb-2 font-medium">Productos</p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Producto</TableHead>
+                        <TableHead className="text-center">Cantidad</TableHead>
+                        <TableHead className="text-right">Precio</TableHead>
+                        <TableHead className="text-right">Subtotal</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedSale.details.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{item.product?.name || `Producto ${item.productId}`}</TableCell>
+                          <TableCell className="text-center">{item.quantity}</TableCell>
+                          <TableCell className="text-right">${Number(item.unitPrice).toFixed(2)}</TableCell>
+                          <TableCell className="text-right">${Number(item.subtotal).toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
 
               <div className="space-y-2 rounded-lg border p-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium">${selectedSale.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Impuesto</span>
-                  <span className="font-medium">${selectedSale.tax.toFixed(2)}</span>
-                </div>
                 <div className="flex justify-between border-t pt-2">
                   <span className="text-lg font-semibold">Total</span>
-                  <span className="text-xl font-bold">${selectedSale.total.toFixed(2)}</span>
+                  <span className="text-xl font-bold">${Number(selectedSale.total).toFixed(2)}</span>
                 </div>
+                {selectedSale.notes && (
+                  <div className="mt-2 pt-2 border-t">
+                    <p className="text-sm text-muted-foreground">Notas</p>
+                    <p className="text-sm">{selectedSale.notes}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

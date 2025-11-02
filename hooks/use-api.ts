@@ -237,7 +237,7 @@ export const useClients = () => {
 };
 
 // Hook para ventas
-export const useSales = () => {
+export const useSales = (storeId?: number) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,7 +246,7 @@ export const useSales = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await saleService.getSales();
+      const data = await saleService.getSales(storeId ? { storeId } : undefined);
       setSales(data);
     } catch (err) {
       const errorMessage = handleApiError(err);
@@ -292,7 +292,7 @@ export const useSales = () => {
 
   useEffect(() => {
     fetchSales();
-  }, []);
+  }, [storeId]);
 
   return {
     sales,

@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect } from "react"
-import { useStore, type Client } from "@/lib/store"
+import { useClients } from "@/hooks/use-api"
+import { Client, ClientData } from "@/lib/services"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,27 +23,27 @@ interface ClientDialogProps {
 }
 
 interface ClientFormData {
-  name: string
+  fullName: string
   phone: string
   email?: string
   address?: string
 }
 
 export function ClientDialog({ client, open, onOpenChange }: ClientDialogProps) {
-  const { currentStore, addClient, updateClient } = useStore()
+  const { createClient, updateClient, fetchClients } = useClients()
   const { register, handleSubmit, reset } = useForm<ClientFormData>()
 
   useEffect(() => {
     if (client) {
       reset({
-        name: client.name,
+        fullName: client.fullName,
         phone: client.phone,
         email: client.email || "",
         address: client.address || "",
       })
     } else {
       reset({
-        name: "",
+        fullName: "",
         phone: "",
         email: "",
         address: "",
@@ -50,58 +51,97 @@ export function ClientDialog({ client, open, onOpenChange }: ClientDialogProps) 
     }
   }, [client, reset])
 
-  const onSubmit = (data: ClientFormData) => {
-    if (client) {
-      updateClient(client.id, data)
-    } else {
-      const newClient: Client = {
-        id: `client-${Date.now()}`,
-        ...data,
-        storeId: currentStore?.id || "",
-        totalDebt: 0,
-        createdAt: new Date().toISOString(),
+  const onSubmit = async (data: ClientFormData) => {
+    try {
+      const clientData: ClientData = {
+        fullName: data.fullName,
+        phone: data.phone,
+        email: data.email || "",
+        address: data.address || "",
       }
-      addClient(newClient)
+
+      if (client) {
+        await updateClient(client.id, clientData)
+        await fetchClients()
+      } else {
+        await createClient(clientData)
+        await fetchClients()
+      }
+      onOpenChange(false)
+    } catch (error: any) {
+      console.error("❌ Error al guardar cliente:", error);
+      alert(`Error al guardar cliente: ${error.message || "Error desconocido"}`);
     }
-    onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{client ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader className="pb-4 border-b">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            {client ? "Editar Cliente" : "Nuevo Cliente"}
+          </DialogTitle>
+          <DialogDescription className="text-base mt-2">
             {client ? "Actualiza la información del cliente" : "Agrega un nuevo cliente a tu base de datos"}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre *</Label>
-            <Input id="name" {...register("name", { required: true })} />
+            <Label htmlFor="fullName" className="font-semibold">Nombre Completo *</Label>
+            <Input 
+              id="fullName" 
+              {...register("fullName", { required: true })} 
+              className="h-11 border-2 focus:border-primary transition-colors"
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="font-semibold">Teléfono *</Label>
+              <Input 
+                id="phone" 
+                type="tel" 
+                {...register("phone", { required: true })} 
+                className="h-11 border-2 focus:border-primary transition-colors"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="font-semibold">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                {...register("email")} 
+                className="h-11 border-2 focus:border-primary transition-colors"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono *</Label>
-            <Input id="phone" type="tel" {...register("phone", { required: true })} />
+            <Label htmlFor="address" className="font-semibold">Dirección</Label>
+            <Input 
+              id="address" 
+              {...register("address")} 
+              className="h-11 border-2 focus:border-primary transition-colors"
+            />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="address">Dirección</Label>
-            <Input id="address" {...register("address")} />
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-2 pt-4 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="transition-all hover:scale-105"
+            >
               Cancelar
             </Button>
-            <Button type="submit">{client ? "Actualizar" : "Crear"} Cliente</Button>
+            <Button 
+              type="submit"
+              className="bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            >
+              {client ? "Actualizar" : "Crear"} Cliente
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

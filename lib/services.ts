@@ -81,21 +81,25 @@ export interface ProductData {
 }
 
 export interface SaleDetail {
+  id?: number;
   productId: number;
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  product?: Product;
 }
 
 export interface Sale {
   id: number;
   invoiceNumber: string;
   total: number;
+  profit?: number;
   isCredit: boolean;
-  notes: string;
+  notes?: string;
   storeId: number;
   clientId?: number;
   userId: number;
+  client?: Client;
   createdAt: string;
   updatedAt: string;
   details: SaleDetail[];
@@ -316,8 +320,18 @@ export const productService = {
 
 // Servicios de ventas
 export const saleService = {
-  async getSales(): Promise<Sale[]> {
-    const response = await api.get("/sales");
+  async getSales(filters?: {
+    storeId?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<Sale[]> {
+    const params = new URLSearchParams();
+    if (filters?.storeId) params.append("storeId", filters.storeId.toString());
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    
+    const queryString = params.toString();
+    const response = await api.get(`/sales${queryString ? `?${queryString}` : ""}`);
     return response.data;
   },
 

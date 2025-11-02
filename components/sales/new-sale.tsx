@@ -48,12 +48,14 @@ export function NewSale() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Cargar productos solo para lectura
+  // Cargar productos solo para lectura, filtrados por tienda
   useEffect(() => {
     const loadProducts = async () => {
       try {
         setLoading(true);
-        const productsData = await productService.getProducts();
+        const productsData = await productService.getProducts(
+          user?.storeId ? { storeId: user.storeId } : undefined
+        );
         setProducts(productsData);
       } catch (error) {
         console.error("Error al cargar productos:", error);
@@ -63,8 +65,10 @@ export function NewSale() {
       }
     };
 
-    loadProducts();
-  }, []);
+    if (user?.storeId) {
+      loadProducts();
+    }
+  }, [user?.storeId]);
 
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return [];
@@ -196,36 +200,40 @@ export function NewSale() {
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Buscar Productos</CardTitle>
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Search className="h-5 w-5 text-primary" />
+              Buscar Productos
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nombre, SKU o código de barras..."
+                placeholder="Buscar por nombre o código de barras..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-12 border-2 text-base focus:border-primary transition-colors"
               />
             </div>
 
             {searchTerm && filteredProducts.length > 0 && (
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-2 max-h-[400px] overflow-y-auto">
                 {filteredProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent cursor-pointer"
+                    className="group flex items-center justify-between rounded-xl border-2 p-4 hover:bg-primary/5 hover:border-primary/50 cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02]"
                     onClick={() => addToCart(product)}
                   >
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Stock: {product.stock} | ${product.sellPrice.toFixed(2)}
+                    <div className="flex-1">
+                      <p className="font-semibold text-base">{product.name}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Stock: <span className="font-medium">{product.stock}</span> | 
+                        Precio: <span className="font-semibold text-primary">${product.sellPrice.toFixed(2)}</span>
                       </p>
                     </div>
-                    <Button size="sm" variant="ghost">
+                    <Button size="sm" variant="ghost" className="ml-4 hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110">
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -247,9 +255,12 @@ export function NewSale() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Carrito de Compra</CardTitle>
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              Carrito de Compra
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {cart.length === 0 ? (
@@ -273,8 +284,8 @@ export function NewSale() {
                 </TableHeader>
                 <TableBody>
                   {cart.map((item) => (
-                    <TableRow key={item.productId}>
-                      <TableCell className="font-medium">
+                    <TableRow key={item.productId} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="font-semibold text-base">
                         {item.productName}
                       </TableCell>
                       <TableCell>
@@ -285,10 +296,11 @@ export function NewSale() {
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity - 1)
                             }
+                            className="h-8 w-8 rounded-full hover:bg-destructive hover:text-destructive-foreground transition-all hover:scale-110"
                           >
                             -
                           </Button>
-                          <span className="w-12 text-center">
+                          <span className="w-12 text-center font-semibold text-base">
                             {item.quantity}
                           </span>
                           <Button
@@ -297,15 +309,16 @@ export function NewSale() {
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity + 1)
                             }
+                            className="h-8 w-8 rounded-full hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
                           >
                             +
                           </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right font-medium">
                         ${item.price.toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-right font-bold text-primary text-lg">
                         ${item.subtotal.toFixed(2)}
                       </TableCell>
                       <TableCell>
@@ -313,6 +326,7 @@ export function NewSale() {
                           size="sm"
                           variant="ghost"
                           onClick={() => removeFromCart(item.productId)}
+                          className="hover:bg-destructive/10 hover:text-destructive transition-all hover:scale-110"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -327,24 +341,27 @@ export function NewSale() {
       </div>
 
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Detalles de Venta</CardTitle>
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl flex items-center gap-2">
+              Detalles de Venta
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Número de Factura</Label>
+              <Label className="font-semibold">Número de Factura</Label>
               <Input
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="FAC-001"
+                className="h-11 border-2 focus:border-primary transition-colors"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Cliente (Opcional)</Label>
+              <Label className="font-semibold">Cliente (Opcional)</Label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 border-2">
                   <SelectValue placeholder="Cliente General" />
                 </SelectTrigger>
                 <SelectContent>
@@ -359,12 +376,12 @@ export function NewSale() {
             </div>
 
             <div className="space-y-2">
-              <Label>Método de Pago</Label>
+              <Label className="font-semibold">Método de Pago</Label>
               <Select
                 value={paymentMethod}
                 onValueChange={(value: any) => setPaymentMethod(value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11 border-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -377,49 +394,50 @@ export function NewSale() {
             </div>
 
             <div className="space-y-2">
-              <Label>Notas</Label>
+              <Label className="font-semibold">Notas</Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Notas adicionales..."
+                className="h-11 border-2 focus:border-primary transition-colors"
               />
             </div>
 
             {paymentMethod === "credit" && selectedClient === "general" && (
-              <div className="rounded-lg bg-destructive/10 p-3">
-                <p className="text-sm text-destructive">
-                  Debes seleccionar un cliente para venta a crédito
+              <div className="rounded-xl bg-destructive/10 border-2 border-destructive/20 p-4 animate-in fade-in">
+                <p className="text-sm font-medium text-destructive">
+                  ⚠️ Debes seleccionar un cliente para venta a crédito
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumen</CardTitle>
+        <Card className="border-2 shadow-lg bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">Resumen</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-medium">${totals.subtotal.toFixed(2)}</span>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+              <span className="text-muted-foreground font-medium">Subtotal</span>
+              <span className="font-semibold text-lg">${totals.subtotal.toFixed(2)}</span>
             </div>
-            <div className="border-t pt-3">
-              <div className="flex justify-between">
-                <span className="text-lg font-semibold">Total</span>
-                <span className="text-2xl font-bold">
+            <div className="border-t-2 pt-4 space-y-3">
+              <div className="flex justify-between items-center p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/20">
+                <span className="text-xl font-bold">Total</span>
+                <span className="text-3xl font-bold text-primary">
                   ${totals.total.toFixed(2)}
                 </span>
               </div>
             </div>
 
             <Button
-              className="w-full"
+              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               size="lg"
               onClick={handleCompleteSale}
               disabled={cart.length === 0}
             >
-              Completar Venta
+              {cart.length === 0 ? "Agrega productos al carrito" : "Completar Venta"}
             </Button>
           </CardContent>
         </Card>
