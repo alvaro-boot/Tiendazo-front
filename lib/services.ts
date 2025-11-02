@@ -135,6 +135,7 @@ export interface CategoryData {
   name: string;
   description: string;
   image?: string;
+  storeId: number;
 }
 
 export interface ClientData {
@@ -227,8 +228,9 @@ export const storeService = {
 
 // Servicios de categorías
 export const categoryService = {
-  async getCategories(): Promise<Category[]> {
-    const response = await api.get("/categories");
+  async getCategories(storeId?: number): Promise<Category[]> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/categories${params}`);
     return response.data;
   },
 

@@ -3,7 +3,9 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useStore, type Category } from "@/lib/store"
+import { useCategories } from "@/hooks/use-categories"
+import { useAuthContext } from "@/lib/auth-context"
+import { Category } from "@/lib/services"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -17,29 +19,40 @@ interface CategoryDialogProps {
 }
 
 export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
-  const { categories, currentStore, addCategory, updateCategory, deleteCategory } = useStore()
+  const { user } = useAuthContext();
+  const { categories, createCategory, updateCategory, deleteCategory, fetchCategories } = useCategories(user?.storeId)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (editingCategory) {
-      updateCategory(editingCategory.id, { name, description })
-      setEditingCategory(null)
-    } else {
-      const newCategory: Category = {
-        id: `cat-${Date.now()}`,
-        name,
-        description,
-        storeId: currentStore?.id || "",
-      }
-      addCategory(newCategory)
+    if (!user?.storeId) {
+      alert("Error: No se pudo identificar la tienda");
+      return;
     }
 
-    setName("")
-    setDescription("")
+    try {
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, { name, description, storeId: user.storeId })
+        setEditingCategory(null)
+        await fetchCategories()
+      } else {
+        await createCategory({ 
+          name, 
+          description, 
+          storeId: user.storeId 
+        })
+        await fetchCategories()
+      }
+
+      setName("")
+      setDescription("")
+    } catch (error: any) {
+      console.error("❌ Error al guardar categoría:", error);
+      alert(`Error al guardar categoría: ${error.message || "Error desconocido"}`);
+    }
   }
 
   const handleEdit = (category: Category) => {
@@ -48,9 +61,15 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
     setDescription(category.description)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm("¿Estás seguro de eliminar esta categoría?")) {
-      deleteCategory(id)
+      try {
+        await deleteCategory(id)
+        await fetchCategories()
+      } catch (error: any) {
+        console.error("❌ Error al eliminar categoría:", error);
+        alert(`Error al eliminar categoría: ${error.message || "Error desconocido"}`);
+      }
     }
   }
 

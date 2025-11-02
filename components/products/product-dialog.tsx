@@ -1,7 +1,10 @@
 "use client"
 
 import { useEffect } from "react"
-import { useStore, type Product } from "@/lib/store"
+import { useProducts } from "@/hooks/use-api"
+import { useCategories } from "@/hooks/use-categories"
+import { useAuthContext } from "@/lib/auth-context"
+import { Product, ProductData } from "@/lib/services"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -26,29 +29,29 @@ interface ProductDialogProps {
 interface ProductFormData {
   name: string
   description: string
-  sku: string
   barcode: string
-  categoryId: string
-  price: number
-  cost: number
+  categoryId: number
+  purchasePrice: number
+  sellPrice: number
   stock: number
   minStock: number
 }
 
 export function ProductDialog({ product, open, onOpenChange }: ProductDialogProps) {
-  const { categories, currentStore, addProduct, updateProduct } = useStore()
+  const { user } = useAuthContext();
+  const { categories } = useCategories(user?.storeId);
+  const { createProduct, updateProduct, fetchProducts } = useProducts(user?.storeId);
   const { register, handleSubmit, reset, setValue, watch } = useForm<ProductFormData>()
 
   useEffect(() => {
     if (product) {
       reset({
         name: product.name,
-        description: product.description,
-        sku: product.sku,
-        barcode: product.barcode,
+        description: product.description || "",
+        barcode: product.barcode || "",
         categoryId: product.categoryId,
-        price: product.price,
-        cost: product.cost,
+        purchasePrice: product.purchasePrice,
+        sellPrice: product.sellPrice,
         stock: product.stock,
         minStock: product.minStock,
       })
@@ -56,34 +59,51 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
       reset({
         name: "",
         description: "",
-        sku: "",
         barcode: "",
-        categoryId: categories[0]?.id || "",
-        price: 0,
-        cost: 0,
+        categoryId: categories[0]?.id || 0,
+        purchasePrice: 0,
+        sellPrice: 0,
         stock: 0,
         minStock: 5,
       })
     }
   }, [product, reset, categories])
 
-  const onSubmit = (data: ProductFormData) => {
-    if (product) {
-      updateProduct(product.id, {
-        ...data,
-        updatedAt: new Date().toISOString(),
-      })
-    } else {
-      const newProduct: Product = {
-        id: `prod-${Date.now()}`,
-        ...data,
-        storeId: currentStore?.id || "",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      addProduct(newProduct)
+  const onSubmit = async (data: ProductFormData) => {
+    if (!user?.storeId) {
+      alert("Error: No se pudo identificar la tienda");
+      return;
     }
-    onOpenChange(false)
+
+    try {
+      const productData: ProductData = {
+        name: data.name,
+        description: data.description,
+        barcode: data.barcode,
+        categoryId: data.categoryId,
+        purchasePrice: data.purchasePrice,
+        sellPrice: data.sellPrice,
+        stock: data.stock,
+        minStock: data.minStock,
+        storeId: user.storeId,
+      };
+
+      if (product) {
+        console.log("📝 Actualizando producto:", product.id);
+        await updateProduct(product.id, productData);
+        console.log("✅ Producto actualizado exitosamente");
+      } else {
+        console.log("➕ Creando nuevo producto");
+        await createProduct(productData);
+        console.log("✅ Producto creado exitosamente");
+      }
+
+      await fetchProducts();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("❌ Error al guardar producto:", error);
+      alert(`Error al guardar producto: ${error.message || "Error desconocido"}`);
+    }
   }
 
   return (
@@ -105,13 +125,13 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
 
             <div className="space-y-2">
               <Label htmlFor="categoryId">Categoría *</Label>
-              <Select value={watch("categoryId")} onValueChange={(value) => setValue("categoryId", value)}>
+              <Select value={String(watch("categoryId") || "")} onValueChange={(value) => setValue("categoryId", Number(value))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
+                    <SelectItem key={category.id} value={String(category.id)}>
                       {category.name}
                     </SelectItem>
                   ))}
@@ -125,36 +145,29 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
             <Textarea id="description" {...register("description")} />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU *</Label>
-              <Input id="sku" {...register("sku", { required: true })} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="barcode">Código de Barras</Label>
-              <Input id="barcode" {...register("barcode")} />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="barcode">Código de Barras</Label>
+            <Input id="barcode" {...register("barcode")} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="price">Precio de Venta *</Label>
+              <Label htmlFor="purchasePrice">Precio de Compra *</Label>
               <Input
-                id="price"
+                id="purchasePrice"
                 type="number"
                 step="0.01"
-                {...register("price", { required: true, valueAsNumber: true })}
+                {...register("purchasePrice", { required: true, valueAsNumber: true })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cost">Costo *</Label>
+              <Label htmlFor="sellPrice">Precio de Venta *</Label>
               <Input
-                id="cost"
+                id="sellPrice"
                 type="number"
                 step="0.01"
-                {...register("cost", { required: true, valueAsNumber: true })}
+                {...register("sellPrice", { required: true, valueAsNumber: true })}
               />
             </div>
           </div>

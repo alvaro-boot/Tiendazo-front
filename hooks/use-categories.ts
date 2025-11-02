@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { categoryService, Category, CategoryData } from "@/lib/services";
 
-export function useCategories() {
+export function useCategories(storeId?: number) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -10,7 +10,7 @@ export function useCategories() {
     try {
       setLoading(true);
       setError(null);
-      const data = await categoryService.getCategories();
+      const data = await categoryService.getCategories(storeId);
       setCategories(data);
     } catch (err: any) {
       setError(err.message || "Error al cargar categorías");
@@ -53,7 +53,7 @@ export function useCategories() {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [storeId]);
 
   return {
     categories,

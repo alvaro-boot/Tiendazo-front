@@ -1,7 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useStore } from "@/lib/store"
+import { useProducts } from "@/hooks/use-api"
+import { useCategories } from "@/hooks/use-categories"
+import { useAuthContext } from "@/lib/auth-context"
+import { Product } from "@/lib/services"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -11,10 +14,11 @@ import { Plus, Search, Pencil, Trash2 } from "lucide-react"
 import { ProductDialog } from "@/components/products/product-dialog"
 import { CategoryDialog } from "@/components/products/category-dialog"
 import { StockDialog } from "@/components/products/stock-dialog"
-import type { Product } from "@/lib/store"
 
 export default function ProductsPage() {
-  const { products, categories, deleteProduct } = useStore()
+  const { user } = useAuthContext()
+  const { products, deleteProduct, fetchProducts } = useProducts(user?.storeId)
+  const { categories } = useCategories(user?.storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -26,9 +30,8 @@ export default function ProductsPage() {
     return products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.barcode.includes(searchTerm)
-      const matchesCategory = categoryFilter === "all" || product.categoryId === categoryFilter
+        (product.barcode && product.barcode.includes(searchTerm))
+      const matchesCategory = categoryFilter === "all" || product.categoryId === Number(categoryFilter)
       return matchesSearch && matchesCategory
     })
   }, [products, searchTerm, categoryFilter])
@@ -38,9 +41,15 @@ export default function ProductsPage() {
     setIsProductDialogOpen(true)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
-      deleteProduct(id)
+      try {
+        await deleteProduct(id)
+        await fetchProducts()
+      } catch (error: any) {
+        console.error("❌ Error al eliminar producto:", error);
+        alert(`Error al eliminar producto: ${error.message || "Error desconocido"}`);
+      }
     }
   }
 
@@ -54,7 +63,7 @@ export default function ProductsPage() {
     setIsStockDialogOpen(true)
   }
 
-  const getCategoryName = (categoryId: string) => {
+  const getCategoryName = (categoryId: number) => {
     return categories.find((c) => c.id === categoryId)?.name || "Sin categoría"
   }
 
@@ -99,7 +108,7 @@ export default function ProductsPage() {
           <SelectContent>
             <SelectItem value="all">Todas las categorías</SelectItem>
             {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
+              <SelectItem key={category.id} value={String(category.id)}>
                 {category.name}
               </SelectItem>
             ))}
@@ -112,10 +121,10 @@ export default function ProductsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Producto</TableHead>
-              <TableHead>SKU</TableHead>
+              <TableHead>Código de Barras</TableHead>
               <TableHead>Categoría</TableHead>
-              <TableHead className="text-right">Precio</TableHead>
-              <TableHead className="text-right">Costo</TableHead>
+              <TableHead className="text-right">Precio Venta</TableHead>
+              <TableHead className="text-right">Precio Compra</TableHead>
               <TableHead className="text-right">Stock</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -139,10 +148,10 @@ export default function ProductsPage() {
                         <p className="text-sm text-muted-foreground">{product.description}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{product.sku}</TableCell>
+                    <TableCell className="font-mono text-sm">{product.barcode || "N/A"}</TableCell>
                     <TableCell>{getCategoryName(product.categoryId)}</TableCell>
-                    <TableCell className="text-right font-medium">${product.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${product.cost.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium">${product.sellPrice.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${product.purchasePrice.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
