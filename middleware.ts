@@ -4,20 +4,25 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // TEMPORAL: Deshabilitar middleware para debugging
-  // Solo proteger rutas del dashboard
-  if (pathname.startsWith("/dashboard")) {
-    console.log("🔍 Middleware (DESHABILITADO):", {
-      path: pathname,
-      message: "Middleware deshabilitado temporalmente para debugging",
-    });
+  // Rutas públicas que no requieren autenticación
+  const publicRoutes = ["/login", "/register", "/register-employee"];
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
-    // TEMPORAL: Permitir acceso sin verificar token
-    // const token = request.cookies.get("access_token")?.value;
-    // if (!token) {
-    //   console.log("🚫 Sin token, redirigiendo a login");
-    //   return NextResponse.redirect(new URL("/login", request.url));
-    // }
+  // Si es una ruta pública, permitir acceso
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // Proteger rutas del dashboard y otras rutas protegidas
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/app")) {
+    const token = request.cookies.get("access_token")?.value;
+
+    if (!token) {
+      console.log("🚫 Sin token, redirigiendo a login desde:", pathname);
+      const url = new URL("/login", request.url);
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
   }
 
   // Para todas las demás rutas, permitir acceso

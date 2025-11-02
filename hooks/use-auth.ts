@@ -34,7 +34,7 @@ export const useAuth = () => {
             storage.set(config.USER_KEY, JSON.stringify(profile));
             
             // Asegurar que la cookie esté sincronizada
-            document.cookie = `access_token=${token}; path=/; max-age=86400; secure; samesite=strict`;
+            document.cookie = `access_token=${token}; path=/; max-age=604800; secure; samesite=strict`;
           } catch (profileError) {
             // Si falla la validación del token, limpiar localStorage
             console.log("⚠️ Token inválido o vencido, limpiando datos:", profileError);
@@ -42,6 +42,11 @@ export const useAuth = () => {
             storage.remove(config.USER_KEY);
             document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
             setUser(null);
+            
+            // Redirigir a login si no estamos ya ahí
+            if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+              window.location.href = "/login";
+            }
           }
         } else {
           console.log("🔍 No hay datos de autenticación almacenados");
@@ -59,6 +64,33 @@ export const useAuth = () => {
 
     initializeAuth();
   }, []);
+
+  // Configurar renovación proactiva de sesión cada 30 minutos (solo cuando hay usuario)
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const refreshInterval = setInterval(async () => {
+      const token = storage.get(config.TOKEN_KEY);
+      if (token) {
+        try {
+          console.log("🔄 Renovando sesión proactivamente...");
+          const refreshResult = await authService.refreshSession();
+          storage.set(config.TOKEN_KEY, refreshResult.access_token);
+          document.cookie = `access_token=${refreshResult.access_token}; path=/; max-age=604800; secure; samesite=strict`;
+          console.log("✅ Sesión renovada exitosamente");
+        } catch (error) {
+          console.error("❌ Error renovando sesión:", error);
+          // Si falla, el interceptor de axios manejará el 401
+        }
+      }
+    }, 30 * 60 * 1000); // Cada 30 minutos
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [user]);
 
   const login = async (credentials: LoginCredentials) => {
     try {
@@ -118,6 +150,11 @@ export const useAuth = () => {
       "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 
     setUser(null);
+
+    // Redirigir a login
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   };
 
   const refreshProfile = async () => {

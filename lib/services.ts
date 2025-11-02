@@ -160,6 +160,11 @@ export const authService = {
     const response = await api.get("/auth/profile");
     return response.data;
   },
+
+  async refreshSession(): Promise<{ access_token: string; expiresAt: string }> {
+    const response = await api.post("/auth/refresh");
+    return response.data;
+  },
 };
 
 // Servicios de tiendas

@@ -31,10 +31,26 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar errores de autenticación
+// Interceptor para manejar errores de autenticación y renovación automática
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     console.log("🚨 Error en API:", {
       status: error.response?.status,
       statusText: error.response?.statusText,
@@ -43,17 +59,94 @@ api.interceptors.response.use(
       data: error.response?.data,
     });
 
-    // TEMPORAL: No cerrar sesión automáticamente en caso de 401
-    if (error.response?.status === 401) {
-      console.log(
-        "🔐 Error 401 - Token inválido, pero NO cerrando sesión (modo debug)"
-      );
-      // storage.remove(config.TOKEN_KEY);
-      // storage.remove(config.USER_KEY);
-      // if (typeof window !== "undefined") {
-      //   window.location.href = "/login";
-      // }
+    // Si es un error 401 y no es un intento de refresh ni login
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url?.includes("/auth/refresh") || 
+          originalRequest.url?.includes("/auth/login")) {
+        // Si el refresh falla, cerrar sesión y redirigir
+        console.log("🔐 Refresh falló, cerrando sesión...");
+        storage.remove(config.TOKEN_KEY);
+        storage.remove(config.USER_KEY);
+        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        // Si ya se está refrescando, agregar a la cola
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const token = storage.get(config.TOKEN_KEY);
+        if (!token) {
+          throw new Error("No token available");
+        }
+
+        // Intentar renovar la sesión usando la instancia de api para evitar loops
+        console.log("🔄 Intentando renovar sesión...");
+        const axiosInstance = axios.create({
+          baseURL: config.API_BASE_URL,
+          timeout: 10000,
+        });
+        const refreshResponse = await axiosInstance.post(
+          `/auth/refresh`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const { access_token } = refreshResponse.data;
+
+        // Guardar nuevo token
+        storage.set(config.TOKEN_KEY, access_token);
+        document.cookie = `access_token=${access_token}; path=/; max-age=604800; secure; samesite=strict`;
+
+        // Actualizar el header de la petición original
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+        // Procesar cola de peticiones fallidas
+        processQueue(null, access_token);
+
+        isRefreshing = false;
+
+        // Reintentar la petición original
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Si falla el refresh, cerrar sesión
+        console.log("❌ Error renovando sesión, cerrando sesión...", refreshError);
+        processQueue(refreshError, null);
+        isRefreshing = false;
+
+        storage.remove(config.TOKEN_KEY);
+        storage.remove(config.USER_KEY);
+        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );
