@@ -19,17 +19,22 @@ export const ProtectedRoute = ({
   const router = useRouter();
 
   useEffect(() => {
-    // Esperar a que termine la carga antes de redirigir
-    // Esto evita redirecciones prematuras durante la inicialización
-    if (!loading && !isAuthenticated) {
-      // Pequeño delay para evitar redirecciones durante transiciones de navegación
+    // NO redirigir automáticamente - solo mostrar mensaje si no está autenticado
+    // Permitir que el usuario continúe navegando incluso si hay problemas de autenticación
+    // Solo redirigir si realmente no hay datos de usuario
+    if (!loading && !isAuthenticated && !user) {
+      // Delay más largo para evitar redirecciones durante navegación
       const timeoutId = setTimeout(() => {
-        router.push('/login');
-      }, 100);
+        // Solo redirigir si aún no está autenticado después del delay
+        if (!isAuthenticated && !user) {
+          console.log("⚠️ No autenticado, redirigiendo a login...");
+          router.push('/login');
+        }
+      }, 500);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, isAuthenticated, router, user]);
 
   if (loading) {
     return (

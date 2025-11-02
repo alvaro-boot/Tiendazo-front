@@ -677,12 +677,9 @@ export const handleApiError = (error: any) => {
 
     switch (status) {
       case 401:
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("user");
-          window.location.href = "/login";
-        }
-        break;
+        // NO cerrar sesión automáticamente - solo lanzar error
+        // Los componentes individuales manejarán el error
+        throw new Error("Token expirado o inválido");
       case 403:
         throw new Error("No tienes permisos para realizar esta acción");
       case 404:

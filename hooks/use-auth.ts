@@ -61,30 +61,12 @@ export const useAuth = () => {
                 }
               })
               .catch((profileError: any) => {
-                // Solo cerrar sesión si es un error de autenticación real
-                const isAuthError = profileError?.response?.status === 401 || 
-                                   profileError?.response?.status === 403 ||
-                                   profileError?.message?.includes("Unauthorized") ||
-                                   profileError?.message?.includes("expired");
-
-                if (isAuthError) {
-                  console.log("⚠️ Token inválido o vencido, limpiando datos:", profileError);
-                  if (isMounted) {
-                    storage.remove(config.TOKEN_KEY);
-                    storage.remove(config.USER_KEY);
-                    storage.remove("last_token_validation");
-                    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-                    setUser(null);
-                    
-                    // Redirigir a login si no estamos ya ahí
-                    if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-                      window.location.href = "/login?reason=session_expired";
-                    }
-                  }
-                } else {
-                  console.warn("⚠️ Error temporal validando token (no es error de auth):", profileError);
-                  // No hacer nada, el usuario puede seguir usando la app con datos en caché
-                }
+                // NO CERRAR SESIÓN AUTOMÁTICAMENTE
+                // Solo loggear el error y dejar que el usuario continúe usando la app
+                // La validación fallida no significa que el token sea inválido (puede ser error de red)
+                console.warn("⚠️ Error validando token en segundo plano (continuando con datos en caché):", profileError);
+                // NO hacer nada - el usuario puede seguir usando la app con los datos en localStorage
+                // Solo marcar que hubo un error para que se intente de nuevo después
               });
           } else {
             console.log("✅ Token validado recientemente, saltando validación");
@@ -99,15 +81,16 @@ export const useAuth = () => {
       } catch (error) {
         console.error("❌ Error inicializando autenticación:", error);
         if (isMounted) {
-          // Solo limpiar si es un error crítico, no por errores de red temporales
-          const isCriticalError = error instanceof SyntaxError || 
-                                 (error as any)?.response?.status === 401 ||
-                                 (error as any)?.response?.status === 403;
-          
-          if (isCriticalError) {
+          // SOLO limpiar si es un error de parsing (datos corruptos)
+          // NO cerrar sesión por errores de red o 401/403
+          if (error instanceof SyntaxError) {
+            console.error("⚠️ Error de parsing, limpiando datos corruptos");
             storage.remove(config.TOKEN_KEY);
             storage.remove(config.USER_KEY);
             setUser(null);
+          } else {
+            // Para cualquier otro error, mantener los datos y dejar que el usuario continúe
+            console.warn("⚠️ Error no crítico, manteniendo datos en caché");
           }
           setLoading(false);
         }
@@ -155,15 +138,15 @@ export const useAuth = () => {
           consecutiveFailures++;
           console.error(`❌ Error renovando sesión (intento ${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, error);
           
-          // Solo cerrar sesión si hay múltiples fallos consecutivos de autenticación
-          const isAuthError = error?.response?.status === 401 || 
-                             error?.response?.status === 403 ||
-                             error?.message?.includes("Unauthorized") ||
-                             error?.message?.includes("expired");
+          // NO CERRAR SESIÓN AUTOMÁTICAMENTE - Solo loggear errores
+          // Incluso con múltiples fallos, no cerrar sesión automáticamente
+          // El usuario puede seguir usando la app con los datos en caché
+          console.warn(`⚠️ Error renovando sesión (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}). No cerrando sesión automáticamente.`);
           
-          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES && isAuthError) {
-            console.error("❌ Múltiples fallos de autenticación al renovar sesión, cerrando sesión...");
-            logout();
+          // Si hay demasiados fallos, intentar de nuevo después de un tiempo
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            console.warn("⚠️ Muchos fallos consecutivos, pausando renovación automática. La sesión se mantendrá activa.");
+            // No cerrar sesión - solo pausar renovación
           }
         }
       }

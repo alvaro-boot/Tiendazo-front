@@ -59,33 +59,20 @@ api.interceptors.response.use(
       data: error.response?.data,
     });
 
-    // Si es un error 401 y no es un intento de refresh ni login
+    // NO CERRAR SESIÓN AUTOMÁTICAMENTE - Solo reintentar con refresh si es posible
+    // Los componentes individuales manejarán los errores de autenticación
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url?.includes("/auth/refresh") || 
-          originalRequest.url?.includes("/auth/login") ||
+      // NO cerrar sesión automáticamente para login/register
+      if (originalRequest.url?.includes("/auth/login") ||
           originalRequest.url?.includes("/auth/register")) {
-        // Si el refresh falla después de varios intentos, cerrar sesión y redirigir
-        console.log("🔐 Refresh/Login falló, verificando si debemos cerrar sesión...");
-        
-        // Solo cerrar sesión si estamos intentando refresh explícitamente
-        if (originalRequest.url?.includes("/auth/refresh")) {
-          console.log("🔐 Refresh falló definitivamente, cerrando sesión...");
-          storage.remove(config.TOKEN_KEY);
-          storage.remove(config.USER_KEY);
-          storage.remove("last_token_validation");
-          document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          if (typeof window !== "undefined") {
-            window.location.href = "/login?reason=session_expired";
-          }
-        }
-        
         return Promise.reject(error);
       }
 
-      // Para otras rutas (como /auth/profile), no intentar refresh automáticamente
+      // Para /auth/profile y /auth/refresh, NO hacer nada automático
       // Dejar que el componente maneje el error
-      if (originalRequest.url?.includes("/auth/profile")) {
-        console.log("⚠️ Error 401 en /auth/profile, no intentando refresh automático");
+      if (originalRequest.url?.includes("/auth/profile") ||
+          originalRequest.url?.includes("/auth/refresh")) {
+        console.log("⚠️ Error 401 en endpoint de auth, dejando que el componente maneje el error");
         return Promise.reject(error);
       }
 
@@ -145,35 +132,14 @@ api.interceptors.response.use(
         // Reintentar la petición original
         return api(originalRequest);
       } catch (refreshError: any) {
-        // Si falla el refresh, verificar el tipo de error
-        console.log("❌ Error renovando sesión:", refreshError);
+        // NO CERRAR SESIÓN AUTOMÁTICAMENTE - Solo rechazar el error
+        // Los componentes individuales manejarán los errores
+        console.log("❌ Error renovando sesión (sin cerrar sesión automáticamente):", refreshError);
         processQueue(refreshError, null);
         isRefreshing = false;
 
-        // Solo cerrar sesión si el error es realmente de autenticación
-        // (no por problemas de red u otros errores)
-        const isAuthError = refreshError.response?.status === 401 || 
-                           refreshError.response?.status === 403 ||
-                           refreshError.message?.includes("Unauthorized") ||
-                           refreshError.message?.includes("token") ||
-                           refreshError.message?.includes("expired") ||
-                           refreshError.response?.data?.message?.includes("token") ||
-                           refreshError.response?.data?.message?.includes("expired");
-
-        if (isAuthError) {
-          console.log("🔐 Error de autenticación definitivo, cerrando sesión...");
-          storage.remove(config.TOKEN_KEY);
-          storage.remove(config.USER_KEY);
-          storage.remove("last_token_validation");
-          document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-
-          if (typeof window !== "undefined") {
-            window.location.href = "/login?reason=session_expired";
-          }
-        } else {
-          console.log("⚠️ Error de red o temporal, no cerrando sesión. El usuario puede reintentar.");
-        }
-
+        // NO hacer nada automático - dejar que el componente maneje el error
+        console.log("⚠️ Error de refresh, rechazando request. El componente manejará el error.");
         return Promise.reject(refreshError);
       }
     }
