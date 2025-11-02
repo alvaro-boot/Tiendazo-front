@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   storeService,
   productService,
@@ -267,7 +267,8 @@ export const useSales = (storeId?: number) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSales = async () => {
+  // Usar useCallback para memoizar fetchSales y evitar recreaciones innecesarias
+  const fetchSales = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -283,13 +284,19 @@ export const useSales = (storeId?: number) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [storeId]); // Solo recrear cuando cambie storeId
 
   useEffect(() => {
-    if (storeId !== undefined) {
+    // Solo ejecutar si hay un storeId válido
+    if (storeId !== undefined && storeId !== null) {
+      console.log("🔄 useSales: Ejecutando fetchSales para storeId:", storeId);
       fetchSales();
+    } else {
+      console.log("⏸️ useSales: No hay storeId, no se cargarán ventas");
+      setLoading(false);
+      setSales([]);
     }
-  }, [storeId]);
+  }, [storeId, fetchSales]);
 
   const createSale = async (saleData: SaleData) => {
     try {

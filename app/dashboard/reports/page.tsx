@@ -30,7 +30,11 @@ import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, Filter } from
 export default function ReportsPage() {
   const { user } = useAuthContext()
   // Normalizar storeId para usar store.id si storeId no está disponible
-  const storeId = user?.storeId || user?.store?.id
+  // Usar useMemo para evitar recalcular en cada render y causar bucles infinitos
+  const storeId = useMemo(() => {
+    return user?.storeId || user?.store?.id
+  }, [user?.storeId, user?.store?.id])
+  
   const { sales, fetchSales, loading } = useSales(storeId)
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")

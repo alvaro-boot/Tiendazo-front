@@ -15,24 +15,18 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 export function SalesHistory() {
   const { user } = useAuthContext()
   // Normalizar storeId para usar store.id si storeId no está disponible
-  const storeId = user?.storeId || user?.store?.id
+  // Usar useMemo para evitar recalcular en cada render
+  const storeId = useMemo(() => {
+    return user?.storeId || user?.store?.id
+  }, [user?.storeId, user?.store?.id])
+  
   const { sales, fetchSales, loading } = useSales(storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
 
-  useEffect(() => {
-    if (storeId) {
-      console.log("🔄 Fetching sales for storeId:", storeId)
-      fetchSales()
-    } else {
-      console.warn("⚠️ No storeId available for user:", {
-        user,
-        storeId,
-        userStoreId: user?.storeId,
-        userStore: user?.store,
-      })
-    }
-  }, [fetchSales, storeId])
+  // El hook useSales ya carga las ventas automáticamente cuando cambia storeId
+  // No necesitamos llamar fetchSales manualmente aquí para evitar bucles infinitos
+  // Solo usamos fetchSales si el usuario quiere refrescar manualmente
 
   // Ya viene filtrado por tienda desde el hook useSales, pero por seguridad filtramos de nuevo
   const filteredSalesByStore = useMemo(() => {
