@@ -4,21 +4,20 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // TEMPORAL: Deshabilitar middleware para debugging
   // Solo proteger rutas del dashboard
   if (pathname.startsWith("/dashboard")) {
-    const token = request.cookies.get("access_token")?.value;
-
-    console.log("🔍 Middleware:", {
+    console.log("🔍 Middleware (DESHABILITADO):", {
       path: pathname,
-      hasToken: !!token,
-      tokenValue: token ? `${token.substring(0, 10)}...` : null,
+      message: "Middleware deshabilitado temporalmente para debugging",
     });
 
-    // Si no hay token, redirigir al login
-    if (!token) {
-      console.log("🚫 Sin token, redirigiendo a login");
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
+    // TEMPORAL: Permitir acceso sin verificar token
+    // const token = request.cookies.get("access_token")?.value;
+    // if (!token) {
+    //   console.log("🚫 Sin token, redirigiendo a login");
+    //   return NextResponse.redirect(new URL("/login", request.url));
+    // }
   }
 
   // Para todas las demás rutas, permitir acceso

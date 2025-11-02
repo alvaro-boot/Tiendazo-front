@@ -18,7 +18,7 @@ api.interceptors.request.use(
       hasToken: !!token,
       tokenPreview: token ? `${token.substring(0, 10)}...` : null,
     });
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
@@ -43,13 +43,16 @@ api.interceptors.response.use(
       data: error.response?.data,
     });
 
+    // TEMPORAL: No cerrar sesión automáticamente en caso de 401
     if (error.response?.status === 401) {
-      console.log("🔐 Error 401 - Token inválido, cerrando sesión");
-      storage.remove(config.TOKEN_KEY);
-      storage.remove(config.USER_KEY);
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      console.log(
+        "🔐 Error 401 - Token inválido, pero NO cerrando sesión (modo debug)"
+      );
+      // storage.remove(config.TOKEN_KEY);
+      // storage.remove(config.USER_KEY);
+      // if (typeof window !== "undefined") {
+      //   window.location.href = "/login";
+      // }
     }
     return Promise.reject(error);
   }
