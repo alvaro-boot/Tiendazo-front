@@ -171,11 +171,12 @@ export function NewSale() {
     }
 
     try {
-      const saleDetails: SaleDetail[] = cart.map((item) => ({
+      // El backend calcula el subtotal automáticamente, no debemos enviarlo
+      const saleDetails = cart.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: item.price,
-        subtotal: item.subtotal,
+        // NO incluir subtotal - el backend lo calcula
       }));
 
       const saleData = {
@@ -185,7 +186,7 @@ export function NewSale() {
         notes:
           notes ||
           `Venta ${paymentMethod === "credit" ? "a crédito" : "al contado"}`,
-        storeId: 1, // Por defecto, debería venir del contexto
+        storeId: user?.storeId || 1,
         clientId:
           selectedClient !== "general" ? parseInt(selectedClient) : undefined,
         details: saleDetails,

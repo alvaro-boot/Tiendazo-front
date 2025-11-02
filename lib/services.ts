@@ -80,6 +80,7 @@ export interface ProductData {
   storeId: number;
 }
 
+// SaleDetail completo (con subtotal calculado) - usado al recibir datos del backend
 export interface SaleDetail {
   id?: number;
   productId: number;
@@ -87,6 +88,13 @@ export interface SaleDetail {
   unitPrice: number;
   subtotal: number;
   product?: Product;
+}
+
+// SaleDetail para crear venta - NO incluye subtotal porque el backend lo calcula
+export interface CreateSaleDetailData {
+  productId: number;
+  quantity: number;
+  unitPrice: number;
 }
 
 export interface Sale {
@@ -112,7 +120,7 @@ export interface SaleData {
   notes: string;
   storeId: number;
   clientId?: number;
-  details: SaleDetail[];
+  details: CreateSaleDetailData[]; // Cambiado a CreateSaleDetailData
 }
 
 export interface Client {
