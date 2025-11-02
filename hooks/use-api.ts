@@ -98,10 +98,19 @@ export const useProducts = (storeId?: number) => {
       setError(null);
       const data = await productService.getProducts();
 
+      // Normalizar los datos: asegurar que los precios sean números
+      const normalizedData = data.map((product) => ({
+        ...product,
+        purchasePrice: Number(product.purchasePrice || 0),
+        sellPrice: Number(product.sellPrice || 0),
+        stock: Number(product.stock || 0),
+        minStock: Number(product.minStock || 0),
+      }));
+
       // Filtrar productos por tienda si se proporciona storeId
       const filteredProducts = storeId
-        ? data.filter((product) => product.storeId === storeId)
-        : data;
+        ? normalizedData.filter((product) => product.storeId === storeId)
+        : normalizedData;
 
       setProducts(filteredProducts);
     } catch (err) {
@@ -115,8 +124,16 @@ export const useProducts = (storeId?: number) => {
   const createProduct = async (productData: ProductData) => {
     try {
       const newProduct = await productService.createProduct(productData);
-      setProducts((prev) => [...prev, newProduct]);
-      return newProduct;
+      // Normalizar el producto creado
+      const normalizedProduct = {
+        ...newProduct,
+        purchasePrice: Number(newProduct.purchasePrice || 0),
+        sellPrice: Number(newProduct.sellPrice || 0),
+        stock: Number(newProduct.stock || 0),
+        minStock: Number(newProduct.minStock || 0),
+      };
+      setProducts((prev) => [...prev, normalizedProduct]);
+      return normalizedProduct;
     } catch (err) {
       const errorMessage = handleApiError(err);
       throw errorMessage;
@@ -132,10 +149,18 @@ export const useProducts = (storeId?: number) => {
         id,
         productData
       );
+      // Normalizar el producto actualizado
+      const normalizedProduct = {
+        ...updatedProduct,
+        purchasePrice: Number(updatedProduct.purchasePrice || 0),
+        sellPrice: Number(updatedProduct.sellPrice || 0),
+        stock: Number(updatedProduct.stock || 0),
+        minStock: Number(updatedProduct.minStock || 0),
+      };
       setProducts((prev) =>
-        prev.map((product) => (product.id === id ? updatedProduct : product))
+        prev.map((product) => (product.id === id ? normalizedProduct : product))
       );
-      return updatedProduct;
+      return normalizedProduct;
     } catch (err) {
       const errorMessage = handleApiError(err);
       throw errorMessage;

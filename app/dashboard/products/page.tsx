@@ -162,8 +162,8 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell className="font-mono text-sm">{product.barcode || "N/A"}</TableCell>
                     <TableCell>{getCategoryName(product.categoryId)}</TableCell>
-                    <TableCell className="text-right font-medium">${product.sellPrice.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${product.purchasePrice.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium">${Number(product.sellPrice || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${Number(product.purchasePrice || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"

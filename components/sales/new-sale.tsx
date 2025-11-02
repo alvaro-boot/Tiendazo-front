@@ -48,27 +48,35 @@ export function NewSale() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Cargar productos solo para lectura, filtrados por tienda
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-        const productsData = await productService.getProducts(
-          user?.storeId ? { storeId: user.storeId } : undefined
-        );
-        setProducts(productsData);
-      } catch (error) {
-        console.error("Error al cargar productos:", error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Cargar productos solo para lectura, filtrados por tienda
+      useEffect(() => {
+        const loadProducts = async () => {
+          try {
+            setLoading(true);
+            const productsData = await productService.getProducts(
+              user?.storeId ? { storeId: user.storeId } : undefined
+            );
+            // Normalizar los datos: asegurar que los precios sean números
+            const normalizedProducts = productsData.map((product) => ({
+              ...product,
+              purchasePrice: Number(product.purchasePrice || 0),
+              sellPrice: Number(product.sellPrice || 0),
+              stock: Number(product.stock || 0),
+              minStock: Number(product.minStock || 0),
+            }));
+            setProducts(normalizedProducts);
+          } catch (error) {
+            console.error("Error al cargar productos:", error);
+            setProducts([]);
+          } finally {
+            setLoading(false);
+          }
+        };
 
-    if (user?.storeId) {
-      loadProducts();
-    }
-  }, [user?.storeId]);
+        if (user?.storeId) {
+          loadProducts();
+        }
+      }, [user?.storeId]);
 
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return [];
@@ -230,7 +238,7 @@ export function NewSale() {
                       <p className="font-semibold text-base">{product.name}</p>
                       <p className="text-sm text-muted-foreground mt-1">
                         Stock: <span className="font-medium">{product.stock}</span> | 
-                        Precio: <span className="font-semibold text-primary">${product.sellPrice.toFixed(2)}</span>
+                        Precio: <span className="font-semibold text-primary">${Number(product.sellPrice || 0).toFixed(2)}</span>
                       </p>
                     </div>
                     <Button size="sm" variant="ghost" className="ml-4 hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110">

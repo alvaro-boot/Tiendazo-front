@@ -309,8 +309,8 @@ export function ProductsPage() {
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.barcode}</TableCell>
-                  <TableCell>${product.purchasePrice.toFixed(2)}</TableCell>
-                  <TableCell>${product.sellPrice.toFixed(2)}</TableCell>
+                  <TableCell>${Number(product.purchasePrice || 0).toFixed(2)}</TableCell>
+                  <TableCell>${Number(product.sellPrice || 0).toFixed(2)}</TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>
                     <Badge
