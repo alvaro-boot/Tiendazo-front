@@ -367,10 +367,18 @@ export const saleService = {
     return response.data;
   },
 
-  async getSalesReport(startDate: string, endDate: string): Promise<any> {
-    const response = await api.get(
-      `/sales/report?start=${startDate}&end=${endDate}`
-    );
+  async getSalesReport(filters?: {
+    startDate?: string;
+    endDate?: string;
+    storeId?: number;
+  }): Promise<any> {
+    const params = new URLSearchParams();
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.storeId) params.append("storeId", filters.storeId.toString());
+    
+    const queryString = params.toString();
+    const response = await api.get(`/sales/report${queryString ? `?${queryString}` : ""}`);
     return response.data;
   },
 };

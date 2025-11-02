@@ -20,14 +20,54 @@ export function SalesHistory() {
 
   useEffect(() => {
     if (user?.storeId) {
+      console.log("🔄 Fetching sales for storeId:", user.storeId)
       fetchSales()
+    } else {
+      console.warn("⚠️ No storeId available for user:", user)
     }
   }, [fetchSales, user?.storeId])
 
-  // Filtrar ventas por tienda del usuario
+  // Ya viene filtrado por tienda desde el hook useSales, pero por seguridad filtramos de nuevo
   const filteredSalesByStore = useMemo(() => {
-    if (!user?.storeId) return []
-    return sales.filter((sale) => sale.storeId === user.storeId)
+    console.log("🔍 Procesando ventas:", {
+      total: sales.length,
+      storeId: user?.storeId,
+      sales: sales.map(s => ({
+        id: s.id,
+        storeId: s.storeId,
+        invoiceNumber: s.invoiceNumber,
+        total: s.total,
+      })),
+    })
+    
+    if (!user?.storeId) {
+      console.warn("⚠️ No storeId, retornando array vacío")
+      return []
+    }
+    
+    const filtered = sales.filter((sale) => {
+      const matches = sale.storeId === user.storeId
+      if (!matches) {
+        console.log("🔍 Venta filtrada:", { saleId: sale.id, saleStoreId: sale.storeId, userStoreId: user.storeId })
+      }
+      return matches
+    })
+    
+    console.log("✅ Ventas filtradas:", {
+      total: sales.length,
+      filtradas: filtered.length,
+      storeId: user?.storeId,
+      ventas: filtered.slice(0, 3).map(s => ({
+        id: s.id,
+        invoiceNumber: s.invoiceNumber,
+        total: s.total,
+        profit: s.profit,
+        hasDetails: !!s.details,
+        detailsCount: s.details?.length || 0,
+      })),
+    })
+    
+    return filtered
   }, [sales, user?.storeId])
 
   const filteredSales = useMemo(() => {
@@ -117,7 +157,7 @@ export function SalesHistory() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
+                <TableHead>Factura</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Método de Pago</TableHead>
@@ -126,22 +166,29 @@ export function SalesHistory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSales.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No se encontraron ventas
-                  </TableCell>
-                </TableRow>
-              ) : loading ? (
+              {loading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Cargando ventas...
                   </TableCell>
                 </TableRow>
+              ) : filteredSales.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-sm">No se encontraron ventas</p>
+                      {!user?.storeId && (
+                        <p className="text-xs text-muted-foreground">Asegúrate de estar asociado a una tienda</p>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : (
                 filteredSales.map((sale) => (
                   <TableRow key={sale.id} className="hover:bg-muted/50 transition-colors border-b">
-                    <TableCell className="font-mono text-sm font-semibold">{sale.invoiceNumber}</TableCell>
+                    <TableCell className="font-mono text-sm font-semibold">
+                      {sale.invoiceNumber || `V-${sale.id}`}
+                    </TableCell>
                     <TableCell className="font-medium">{sale.client?.fullName || "Cliente general"}</TableCell>
                     <TableCell className="text-muted-foreground">{new Date(sale.createdAt).toLocaleString("es-ES")}</TableCell>
                     <TableCell>
