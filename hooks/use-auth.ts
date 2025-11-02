@@ -14,6 +14,8 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const initializeAuth = async () => {
       try {
         const token = storage.get(config.TOKEN_KEY);
@@ -26,43 +28,97 @@ export const useAuth = () => {
         });
 
         if (token && userData) {
-          // Intentar validar el token verificando el perfil del usuario
+          // Primero, restaurar el usuario desde localStorage (más rápido, sin llamada API)
           try {
-            const profile = await authService.getProfile();
-            console.log("✅ Token válido, usuario autenticado:", profile);
-            setUser(profile);
-            storage.set(config.USER_KEY, JSON.stringify(profile));
-            
-            // Asegurar que la cookie esté sincronizada (30 días)
-            document.cookie = `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
-          } catch (profileError) {
-            // Si falla la validación del token, limpiar localStorage
-            console.log("⚠️ Token inválido o vencido, limpiando datos:", profileError);
-            storage.remove(config.TOKEN_KEY);
-            storage.remove(config.USER_KEY);
-            document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-            setUser(null);
-            
-            // Redirigir a login si no estamos ya ahí
-            if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-              window.location.href = "/login";
+            const parsedUser = JSON.parse(userData);
+            if (isMounted) {
+              setUser(parsedUser);
+              setLoading(false);
+              
+              // Asegurar que la cookie esté sincronizada (30 días)
+              document.cookie = `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; secure; samesite=strict`;
+              console.log("✅ Usuario restaurado desde localStorage");
             }
+          } catch (parseError) {
+            console.warn("⚠️ Error parseando datos de usuario:", parseError);
+          }
+
+          // Validar el token en segundo plano (sin bloquear la UI)
+          // Solo validar si realmente es necesario (primera carga o cada cierto tiempo)
+          const lastValidation = storage.get("last_token_validation");
+          const now = Date.now();
+          const VALIDATION_INTERVAL = 5 * 60 * 1000; // Validar cada 5 minutos máximo
+
+          if (!lastValidation || (now - parseInt(lastValidation)) > VALIDATION_INTERVAL) {
+            // Validar token en segundo plano sin afectar la UI
+            authService.getProfile()
+              .then((profile) => {
+                if (isMounted) {
+                  console.log("✅ Token validado en segundo plano, perfil actualizado:", profile);
+                  setUser(profile);
+                  storage.set(config.USER_KEY, JSON.stringify(profile));
+                  storage.set("last_token_validation", now.toString());
+                }
+              })
+              .catch((profileError: any) => {
+                // Solo cerrar sesión si es un error de autenticación real
+                const isAuthError = profileError?.response?.status === 401 || 
+                                   profileError?.response?.status === 403 ||
+                                   profileError?.message?.includes("Unauthorized") ||
+                                   profileError?.message?.includes("expired");
+
+                if (isAuthError) {
+                  console.log("⚠️ Token inválido o vencido, limpiando datos:", profileError);
+                  if (isMounted) {
+                    storage.remove(config.TOKEN_KEY);
+                    storage.remove(config.USER_KEY);
+                    storage.remove("last_token_validation");
+                    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                    setUser(null);
+                    
+                    // Redirigir a login si no estamos ya ahí
+                    if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+                      window.location.href = "/login?reason=session_expired";
+                    }
+                  }
+                } else {
+                  console.warn("⚠️ Error temporal validando token (no es error de auth):", profileError);
+                  // No hacer nada, el usuario puede seguir usando la app con datos en caché
+                }
+              });
+          } else {
+            console.log("✅ Token validado recientemente, saltando validación");
           }
         } else {
           console.log("🔍 No hay datos de autenticación almacenados");
-          setUser(null);
+          if (isMounted) {
+            setUser(null);
+            setLoading(false);
+          }
         }
       } catch (error) {
         console.error("❌ Error inicializando autenticación:", error);
-        storage.remove(config.TOKEN_KEY);
-        storage.remove(config.USER_KEY);
-        setUser(null);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          // Solo limpiar si es un error crítico, no por errores de red temporales
+          const isCriticalError = error instanceof SyntaxError || 
+                                 (error as any)?.response?.status === 401 ||
+                                 (error as any)?.response?.status === 403;
+          
+          if (isCriticalError) {
+            storage.remove(config.TOKEN_KEY);
+            storage.remove(config.USER_KEY);
+            setUser(null);
+          }
+          setLoading(false);
+        }
       }
     };
 
     initializeAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Configurar renovación proactiva de sesión cada 10 minutos (solo cuando hay usuario)

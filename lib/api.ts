@@ -72,12 +72,20 @@ api.interceptors.response.use(
           console.log("🔐 Refresh falló definitivamente, cerrando sesión...");
           storage.remove(config.TOKEN_KEY);
           storage.remove(config.USER_KEY);
+          storage.remove("last_token_validation");
           document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
           if (typeof window !== "undefined") {
             window.location.href = "/login?reason=session_expired";
           }
         }
         
+        return Promise.reject(error);
+      }
+
+      // Para otras rutas (como /auth/profile), no intentar refresh automáticamente
+      // Dejar que el componente maneje el error
+      if (originalRequest.url?.includes("/auth/profile")) {
+        console.log("⚠️ Error 401 en /auth/profile, no intentando refresh automático");
         return Promise.reject(error);
       }
 
@@ -156,6 +164,7 @@ api.interceptors.response.use(
           console.log("🔐 Error de autenticación definitivo, cerrando sesión...");
           storage.remove(config.TOKEN_KEY);
           storage.remove(config.USER_KEY);
+          storage.remove("last_token_validation");
           document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 
           if (typeof window !== "undefined") {

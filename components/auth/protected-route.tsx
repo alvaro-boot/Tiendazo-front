@@ -19,8 +19,15 @@ export const ProtectedRoute = ({
   const router = useRouter();
 
   useEffect(() => {
+    // Esperar a que termine la carga antes de redirigir
+    // Esto evita redirecciones prematuras durante la inicialización
     if (!loading && !isAuthenticated) {
-      router.push('/login');
+      // Pequeño delay para evitar redirecciones durante transiciones de navegación
+      const timeoutId = setTimeout(() => {
+        router.push('/login');
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [loading, isAuthenticated, router]);
 
