@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useClients } from "@/hooks/use-api"
+import { useDebts } from "@/hooks/use-debts"
 import { useAuthContext } from "@/lib/auth-context"
 import { Client } from "@/lib/services"
 import { Button } from "@/components/ui/button"
@@ -16,9 +17,18 @@ export default function ClientsPage() {
   const { user } = useAuthContext()
   const storeId = user?.storeId || user?.store?.id
   const { clients, deleteClient, fetchClients } = useClients(storeId)
+  const { clientsDebtInfo, totalDebt, fetchClientsWithDebt, fetchTotalDebt } = useDebts()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  // Actualizar datos de deuda cuando se actualiza un cliente
+  useEffect(() => {
+    if (storeId) {
+      fetchClientsWithDebt()
+      fetchTotalDebt()
+    }
+  }, [storeId, clients, fetchClientsWithDebt, fetchTotalDebt])
 
   const filteredClients = useMemo(() => {
     return clients.filter(
@@ -30,9 +40,10 @@ export default function ClientsPage() {
   }, [clients, searchTerm])
 
   const totalClients = clients.length
-  // Nota: La deuda se maneja en el backend, aquí solo mostramos información básica
-  const clientsWithDebt = 0 // Se calcularía desde el backend si hay un campo de deuda
-  const totalDebt = 0 // Se calcularía desde el backend
+  // Calcular clientes con deuda desde clientsDebtInfo
+  const clientsWithDebt = useMemo(() => {
+    return clientsDebtInfo.filter(info => info.totalDebt > 0).length
+  }, [clientsDebtInfo])
 
   const handleEdit = (client: Client) => {
     setSelectedClient(client)
@@ -44,6 +55,11 @@ export default function ClientsPage() {
       try {
         await deleteClient(id)
         await fetchClients()
+        // Actualizar datos de deuda después de eliminar
+        if (storeId) {
+          await fetchClientsWithDebt()
+          await fetchTotalDebt()
+        }
       } catch (error: any) {
         console.error("❌ Error al eliminar cliente:", error);
         alert(`Error al eliminar cliente: ${error.message || "Error desconocido"}`);
@@ -199,7 +215,20 @@ export default function ClientsPage() {
         </CardContent>
       </Card>
 
-      <ClientDialog client={selectedClient} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <ClientDialog 
+        client={selectedClient} 
+        open={isDialogOpen} 
+        onOpenChange={(open) => {
+          setIsDialogOpen(open)
+          if (!open) {
+            // Actualizar datos de deuda después de cerrar el diálogo
+            if (storeId) {
+              fetchClientsWithDebt()
+              fetchTotalDebt()
+            }
+          }
+        }} 
+      />
     </div>
   )
 }

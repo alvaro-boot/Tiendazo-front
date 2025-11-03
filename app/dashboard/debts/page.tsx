@@ -349,8 +349,14 @@ function DebtsReportSection({
     const start = new Date()
     start.setMonth(start.getMonth() - 1)
     
-    setStartDate(start.toISOString().split("T")[0])
-    setEndDate(end.toISOString().split("T")[0])
+    const formatLocalDate = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    setStartDate(formatLocalDate(start))
+    setEndDate(formatLocalDate(end))
   }, [])
 
   // Cargar reporte cuando cambien las fechas

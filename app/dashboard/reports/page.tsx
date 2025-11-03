@@ -45,14 +45,21 @@ export default function ReportsPage() {
   const [debtsReportData, setDebtsReportData] = useState<any>(null)
   const [debtsLoading, setDebtsLoading] = useState(false)
 
-  // Establecer fechas por defecto (último mes)
+  // Establecer fechas por defecto (último mes) usando fecha local
   useEffect(() => {
+    const formatLocalDate = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    
     const end = new Date()
     const start = new Date()
     start.setMonth(start.getMonth() - 1)
     
-    setStartDate(start.toISOString().split("T")[0])
-    setEndDate(end.toISOString().split("T")[0])
+    setStartDate(formatLocalDate(start))
+    setEndDate(formatLocalDate(end))
   }, [])
 
   // Cargar reportes cuando cambien las fechas
@@ -78,6 +85,8 @@ export default function ReportsPage() {
     try {
       const currentStoreId = storeId || user?.storeId || user?.store?.id
       const filters: any = { storeId: currentStoreId }
+      // Usar las fechas directamente del input (formato YYYY-MM-DD en zona local)
+      // No convertir a ISO para evitar problemas de zona horaria
       if (startDate) filters.startDate = startDate
       if (endDate) filters.endDate = endDate
 
@@ -307,11 +316,17 @@ export default function ReportsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    const formatLocalDate = (date: Date) => {
+                      const year = date.getFullYear()
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const day = String(date.getDate()).padStart(2, '0')
+                      return `${year}-${month}-${day}`
+                    }
                     const end = new Date()
                     const start = new Date()
                     start.setDate(start.getDate() - 7)
-                    setStartDate(start.toISOString().split("T")[0])
-                    setEndDate(end.toISOString().split("T")[0])
+                    setStartDate(formatLocalDate(start))
+                    setEndDate(formatLocalDate(end))
                   }}
                   className="flex-1"
                 >
@@ -321,11 +336,17 @@ export default function ReportsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    const formatLocalDate = (date: Date) => {
+                      const year = date.getFullYear()
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const day = String(date.getDate()).padStart(2, '0')
+                      return `${year}-${month}-${day}`
+                    }
                     const end = new Date()
                     const start = new Date()
                     start.setMonth(start.getMonth() - 1)
-                    setStartDate(start.toISOString().split("T")[0])
-                    setEndDate(end.toISOString().split("T")[0])
+                    setStartDate(formatLocalDate(start))
+                    setEndDate(formatLocalDate(end))
                   }}
                   className="flex-1"
                 >
@@ -335,11 +356,17 @@ export default function ReportsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    const formatLocalDate = (date: Date) => {
+                      const year = date.getFullYear()
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const day = String(date.getDate()).padStart(2, '0')
+                      return `${year}-${month}-${day}`
+                    }
                     const end = new Date()
                     const start = new Date()
                     start.setMonth(start.getMonth() - 3)
-                    setStartDate(start.toISOString().split("T")[0])
-                    setEndDate(end.toISOString().split("T")[0])
+                    setStartDate(formatLocalDate(start))
+                    setEndDate(formatLocalDate(end))
                   }}
                   className="flex-1"
                 >

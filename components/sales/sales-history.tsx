@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useSales } from "@/hooks/use-api"
 import { useAuthContext } from "@/lib/auth-context"
 import { Sale, saleService } from "@/lib/services"
@@ -21,57 +21,68 @@ export function SalesHistory() {
     return user?.storeId || user?.store?.id
   }, [user?.storeId, user?.store?.id])
   
-  const { fetchSales, loading, deleteSale } = useSales(storeId)
+  const { fetchSales, deleteSale } = useSales(storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
+  const [loading, setLoading] = useState(false)
   
-  // Filtros de fecha - por defecto día actual
+  // Filtros de fecha - por defecto día actual (usar fecha local)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date()
-    return today.toISOString().split("T")[0]
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   })
   const [dateFilter, setDateFilter] = useState<"today" | "custom">("today")
   
   // Cargar ventas filtradas por fecha
   const [sales, setSales] = useState<Sale[]>([])
   
-  // Cargar ventas con filtro de fecha cuando cambie selectedDate o storeId
-  useEffect(() => {
-    if (storeId) {
+  // Función para cargar ventas filtradas
+  const loadFilteredSales = useCallback(async () => {
+    if (!storeId) {
+      setSales([])
+      setLoading(false)
+      return
+    }
+    
+    setLoading(true)
+    try {
       let filters: any = { storeId }
       
       if (dateFilter === "today") {
-        // Cargar ventas del día actual
+        // Cargar ventas del día actual (usar fecha local, no UTC)
         const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const endOfDay = new Date(today)
-        endOfDay.setHours(23, 59, 59, 999)
+        const year = today.getFullYear()
+        const month = String(today.getMonth() + 1).padStart(2, '0')
+        const day = String(today.getDate()).padStart(2, '0')
         
-        filters.startDate = today.toISOString().split("T")[0]
-        filters.endDate = endOfDay.toISOString().split("T")[0]
+        filters.startDate = `${year}-${month}-${day}`
+        filters.endDate = `${year}-${month}-${day}`
       } else if (dateFilter === "custom" && selectedDate) {
-        // Cargar ventas de la fecha seleccionada
-        const startOfDay = new Date(selectedDate)
-        startOfDay.setHours(0, 0, 0, 0)
-        const endOfDay = new Date(selectedDate)
-        endOfDay.setHours(23, 59, 59, 999)
-        
-        filters.startDate = startOfDay.toISOString().split("T")[0]
-        filters.endDate = endOfDay.toISOString().split("T")[0]
+        // Cargar ventas de la fecha seleccionada (usar fecha directamente del input, ya viene en formato YYYY-MM-DD)
+        // El input type="date" devuelve la fecha en formato YYYY-MM-DD en zona horaria local
+        filters.startDate = selectedDate
+        filters.endDate = selectedDate
       }
       
       console.log("📅 Cargando ventas con filtros:", filters)
-      saleService.getSales(filters).then((data) => {
-        console.log("✅ Ventas cargadas:", data.length)
-        setSales(data)
-      }).catch((err) => {
-        console.error("❌ Error cargando ventas:", err)
-        setSales([])
-      })
-    } else {
+      const data = await saleService.getSales(filters)
+      console.log("✅ Ventas cargadas:", data.length)
+      setSales(data)
+    } catch (err) {
+      console.error("❌ Error cargando ventas:", err)
       setSales([])
+    } finally {
+      setLoading(false)
     }
   }, [storeId, selectedDate, dateFilter])
+  
+  // Cargar ventas con filtro de fecha cuando cambie selectedDate o storeId
+  useEffect(() => {
+    loadFilteredSales()
+  }, [loadFilteredSales])
 
   // Las ventas ya vienen filtradas por fecha desde el backend, solo necesitamos filtrar por tienda
   const filteredSalesByStore = useMemo(() => {
@@ -123,7 +134,10 @@ export function SalesHistory() {
                 onClick={() => {
                   setDateFilter("today")
                   const today = new Date()
-                  setSelectedDate(today.toISOString().split("T")[0])
+                  const year = today.getFullYear()
+                  const month = String(today.getMonth() + 1).padStart(2, '0')
+                  const day = String(today.getDate()).padStart(2, '0')
+                  setSelectedDate(`${year}-${month}-${day}`)
                 }}
                 className="transition-all hover:scale-105"
               >
@@ -296,6 +310,8 @@ export function SalesHistory() {
                               if (confirm(`¿Estás seguro de eliminar la venta ${sale.invoiceNumber}?`)) {
                                 try {
                                   await deleteSale(sale.id);
+                                  // Recargar las ventas después de eliminar
+                                  await loadFilteredSales();
                                   alert("Venta eliminada exitosamente");
                                 } catch (error: any) {
                                   alert(`Error al eliminar venta: ${error.message || "Error desconocido"}`);
