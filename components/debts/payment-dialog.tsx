@@ -94,7 +94,7 @@ export function PaymentDialog({ client, open, onOpenChange, onSuccess }: Payment
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-[95vw] sm:max-w-md w-full">
         <DialogHeader>
           <DialogTitle className="text-xl">Registrar Pago</DialogTitle>
           <DialogDescription>

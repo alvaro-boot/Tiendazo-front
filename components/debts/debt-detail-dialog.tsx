@@ -115,7 +115,7 @@ export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto w-full">
         <DialogHeader>
           <DialogTitle className="text-xl">Detalle de Deuda</DialogTitle>
           <DialogDescription>

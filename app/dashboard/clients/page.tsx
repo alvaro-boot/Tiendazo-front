@@ -61,14 +61,14 @@ export default function ClientsPage() {
       {/* Header mejorado */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Clientes
           </h1>
-          <p className="text-muted-foreground mt-2">Gestiona tu base de clientes</p>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">Gestiona tu base de clientes</p>
         </div>
         <Button 
           onClick={handleAddNew}
-          className="bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          className="bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105 w-full sm:w-auto"
         >
           <Plus className="mr-2 h-4 w-4" />
           Nuevo Cliente
@@ -144,11 +144,11 @@ export default function ClientsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-b-2">
-                  <TableHead className="font-semibold">Nombre</TableHead>
-                  <TableHead className="font-semibold">Teléfono</TableHead>
-                  <TableHead className="font-semibold">Email</TableHead>
-                  <TableHead className="font-semibold">Dirección</TableHead>
-                  <TableHead className="text-right font-semibold">Acciones</TableHead>
+                  <TableHead className="font-semibold min-w-[150px]">Nombre</TableHead>
+                  <TableHead className="font-semibold hidden sm:table-cell min-w-[120px]">Teléfono</TableHead>
+                  <TableHead className="font-semibold hidden md:table-cell min-w-[150px]">Email</TableHead>
+                  <TableHead className="font-semibold hidden lg:table-cell min-w-[150px]">Dirección</TableHead>
+                  <TableHead className="text-right font-semibold min-w-[100px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -161,10 +161,15 @@ export default function ClientsPage() {
                 ) : (
                   filteredClients.map((client) => (
                     <TableRow key={client.id} className="hover:bg-muted/50 transition-colors border-b">
-                      <TableCell className="font-semibold text-base">{client.fullName}</TableCell>
-                      <TableCell>{client.phone}</TableCell>
-                      <TableCell>{client.email || "-"}</TableCell>
-                      <TableCell className="text-muted-foreground">{client.address || "-"}</TableCell>
+                      <TableCell className="font-semibold text-base">
+                        <div>
+                          <p>{client.fullName}</p>
+                          <p className="text-xs text-muted-foreground sm:hidden mt-1">{client.phone}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">{client.phone}</TableCell>
+                      <TableCell className="hidden md:table-cell">{client.email || "-"}</TableCell>
+                      <TableCell className="text-muted-foreground hidden lg:table-cell">{client.address || "-"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button 

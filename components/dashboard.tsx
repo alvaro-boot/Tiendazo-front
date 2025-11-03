@@ -52,16 +52,16 @@ export function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header con bienvenida */}
-      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-8 shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-4 sm:p-6 md:p-8 shadow-lg">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         <div className="relative">
-          <h1 className="text-4xl font-bold tracking-tight mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Bienvenido de vuelta
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base sm:text-lg text-muted-foreground">
             {user?.fullName || user?.username}
             {isAdmin && (
-              <Badge className="ml-3 bg-gradient-to-r from-primary to-primary/80">
+              <Badge className="ml-2 sm:ml-3 bg-gradient-to-r from-primary to-primary/80">
                 Administrador
               </Badge>
             )}

@@ -229,7 +229,7 @@ export function SalesHistory() {
       </Card>
 
       <Dialog open={!!selectedSale} onOpenChange={() => setSelectedSale(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalle de Venta</DialogTitle>
             <DialogDescription>Factura: {selectedSale?.invoiceNumber}</DialogDescription>

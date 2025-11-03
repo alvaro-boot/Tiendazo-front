@@ -127,25 +127,26 @@ export default function ProductsPage() {
         </Select>
       </div>
 
-      {/* Tabla mejorada */}
+      {/* Tabla mejorada - Responsive */}
       <div className="rounded-xl border-2 bg-card shadow-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Producto</TableHead>
-              <TableHead>Código de Barras</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead className="text-right">Precio Venta</TableHead>
-              <TableHead className="text-right">Precio Compra</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[150px]">Producto</TableHead>
+                <TableHead className="hidden sm:table-cell min-w-[120px]">Código de Barras</TableHead>
+                <TableHead className="hidden md:table-cell min-w-[100px]">Categoría</TableHead>
+                <TableHead className="text-right min-w-[100px]">Precio Venta</TableHead>
+                <TableHead className="text-right hidden lg:table-cell min-w-[100px]">Precio Compra</TableHead>
+                <TableHead className="text-right min-w-[80px]">Stock</TableHead>
+                <TableHead className="hidden md:table-cell min-w-[100px]">Estado</TableHead>
+                <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   No se encontraron productos
                 </TableCell>
               </TableRow>
@@ -160,10 +161,10 @@ export default function ProductsPage() {
                         <p className="text-sm text-muted-foreground">{product.description}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{product.barcode || "N/A"}</TableCell>
-                    <TableCell>{getCategoryName(product.categoryId)}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-sm">{product.barcode || "N/A"}</TableCell>
+                    <TableCell className="hidden md:table-cell">{getCategoryName(product.categoryId)}</TableCell>
                     <TableCell className="text-right font-medium">${Number(product.sellPrice || 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${Number(product.purchasePrice || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right hidden lg:table-cell">${Number(product.purchasePrice || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -174,7 +175,7 @@ export default function ProductsPage() {
                         {product.stock}
                       </Button>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>
                     </TableCell>
                     <TableCell className="text-right">

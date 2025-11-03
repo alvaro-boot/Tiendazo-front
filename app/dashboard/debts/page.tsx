@@ -84,15 +84,15 @@ export default function DebtsPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Fiados
           </h1>
-          <p className="text-muted-foreground mt-2">Gestiona las deudas de tus clientes</p>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">Gestiona las deudas de tus clientes</p>
         </div>
         <Button
           variant="outline"
           onClick={() => setShowDebtsReport(!showDebtsReport)}
-          className="transition-all hover:scale-105"
+          className="transition-all hover:scale-105 w-full sm:w-auto"
         >
           <Calendar className="mr-2 h-4 w-4" />
           {showDebtsReport ? "Ocultar Reporte" : "Ver Reporte"}
@@ -179,26 +179,32 @@ export default function DebtsPage() {
               <p className="text-xs mt-1">No hay deudas pendientes en este momento</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b-2">
-                  <TableHead className="font-semibold">Cliente</TableHead>
-                  <TableHead className="font-semibold">Contacto</TableHead>
-                  <TableHead className="text-right font-semibold">Deuda Total</TableHead>
-                  <TableHead className="text-right font-semibold">Último Pago</TableHead>
-                  <TableHead className="text-center font-semibold">Pagos</TableHead>
-                  <TableHead className="text-right font-semibold">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b-2">
+                    <TableHead className="font-semibold min-w-[150px]">Cliente</TableHead>
+                    <TableHead className="font-semibold hidden md:table-cell min-w-[120px]">Contacto</TableHead>
+                    <TableHead className="text-right font-semibold min-w-[100px]">Deuda Total</TableHead>
+                    <TableHead className="text-right font-semibold hidden lg:table-cell min-w-[120px]">Último Pago</TableHead>
+                    <TableHead className="text-center font-semibold hidden sm:table-cell min-w-[80px]">Pagos</TableHead>
+                    <TableHead className="text-right font-semibold min-w-[120px]">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {filteredClients.map((info) => {
                   const client = info.client
                   return (
                     <TableRow key={client.id} className="hover:bg-muted/50 transition-colors border-b">
                       <TableCell className="font-semibold text-base">
-                        {client.fullName}
+                        <div>
+                          <p>{client.fullName}</p>
+                          {client.phone && (
+                            <p className="text-xs text-muted-foreground md:hidden mt-1">{client.phone}</p>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-muted-foreground hidden md:table-cell">
                         <div className="space-y-1">
                           {client.phone && (
                             <p className="text-sm">{client.phone}</p>
@@ -209,11 +215,11 @@ export default function DebtsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className="text-xl font-bold text-red-600">
+                        <span className="text-lg sm:text-xl font-bold text-red-600">
                           ${info.totalDebt.toFixed(2)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
+                      <TableCell className="text-right text-muted-foreground hidden lg:table-cell">
                         {info.lastPayment ? (
                           <div className="space-y-1">
                             <p className="text-sm font-medium">
@@ -230,7 +236,7 @@ export default function DebtsPage() {
                           <span className="text-xs text-muted-foreground">Sin pagos</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center hidden sm:table-cell">
                         <Badge variant="outline" className="font-semibold">
                           {info.paymentCount}
                         </Badge>
@@ -262,6 +268,7 @@ export default function DebtsPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

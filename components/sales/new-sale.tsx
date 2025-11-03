@@ -223,8 +223,8 @@ export function NewSale() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2 space-y-6">
+    <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+      <div className="lg:col-span-2 space-y-4 sm:space-y-6">
         <Card className="border-2 shadow-lg">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl flex items-center gap-2">
