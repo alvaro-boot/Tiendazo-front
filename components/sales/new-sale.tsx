@@ -438,7 +438,6 @@ export function NewSale() {
             )}
           </CardContent>
         </Card>
-
       </div>
 
       <div className="lg:col-span-1 space-y-4 sm:space-y-6">
@@ -688,6 +687,7 @@ export function NewSale() {
             </Button>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
