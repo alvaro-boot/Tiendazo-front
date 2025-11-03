@@ -668,23 +668,27 @@ export const debtService = {
     startDate?: string;
     endDate?: string;
     clientId?: number;
+    storeId?: number;
   }): Promise<any> {
     const params = new URLSearchParams();
     if (filters?.startDate) params.append("startDate", filters.startDate);
     if (filters?.endDate) params.append("endDate", filters.endDate);
     if (filters?.clientId) params.append("clientId", filters.clientId.toString());
+    if (filters?.storeId) params.append("storeId", filters.storeId.toString());
     
     const response = await api.get(`/debts/report?${params.toString()}`);
     return response.data;
   },
 
-  async getClientsWithDebt(): Promise<Client[]> {
-    const response = await api.get("/debts/clients-with-debt");
+  async getClientsWithDebt(storeId?: number): Promise<Client[]> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/debts/clients-with-debt${params}`);
     return response.data;
   },
 
-  async getTotalDebt(): Promise<{ total: number }> {
-    const response = await api.get("/debts/total-debt");
+  async getTotalDebt(storeId?: number): Promise<{ total: number }> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/debts/total-debt${params}`);
     // El backend devuelve directamente un número, normalizar a objeto
     const total = typeof response.data === 'number' ? response.data : response.data.total || 0;
     return { total };

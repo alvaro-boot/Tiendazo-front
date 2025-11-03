@@ -40,7 +40,7 @@ export const useDebts = () => {
   // Cargar total de deuda
   const fetchTotalDebt = useCallback(async () => {
     try {
-      const result = await debtService.getTotalDebt();
+      const result = await debtService.getTotalDebt(storeId);
       // Convertir valores a números correctamente para asegurar precisión
       const total = parseFloat(String(result.total || 0));
       setTotalDebt(total);
@@ -48,7 +48,7 @@ export const useDebts = () => {
       console.error("❌ Error obteniendo total de deuda:", err);
       setTotalDebt(0);
     }
-  }, []);
+  }, [storeId]);
 
   // Cargar pagos
   const fetchPayments = useCallback(async (filters?: {
@@ -121,13 +121,18 @@ export const useDebts = () => {
     clientId?: number;
   }): Promise<any> => {
     try {
-      const report = await debtService.getDebtsReport(filters);
+      // Agregar storeId a los filtros si está disponible
+      const filtersWithStore = {
+        ...filters,
+        storeId: storeId,
+      };
+      const report = await debtService.getDebtsReport(filtersWithStore);
       return report;
     } catch (err: any) {
       console.error("❌ Error obteniendo reporte de deudas:", err);
       throw handleApiError(err);
     }
-  }, []);
+  }, [storeId]);
 
   // Información de deudas por cliente (para la UI)
   const clientsDebtInfo = useMemo<ClientDebtInfo[]>(() => {
@@ -149,14 +154,22 @@ export const useDebts = () => {
     });
   }, [clientsWithDebt, payments]);
 
-  // Cargar datos iniciales - solo una vez al montar
+  // Cargar datos iniciales cuando cambie storeId
   useEffect(() => {
-    console.log("🔄 useDebts: Cargando datos iniciales de deudas");
-    fetchClientsWithDebt();
-    fetchTotalDebt();
-    fetchPayments();
+    if (storeId !== undefined && storeId !== null) {
+      console.log("🔄 useDebts: Cargando datos iniciales de deudas para storeId:", storeId);
+      fetchClientsWithDebt();
+      fetchTotalDebt();
+      fetchPayments();
+    } else {
+      console.log("⏸️ useDebts: No hay storeId, no se cargarán datos de deudas");
+      setClientsWithDebt([]);
+      setTotalDebt(0);
+      setPayments([]);
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo ejecutar una vez al montar
+  }, [storeId]); // Ejecutar cuando cambie storeId
 
   return {
     payments,
