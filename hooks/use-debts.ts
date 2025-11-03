@@ -7,6 +7,11 @@ import { handleApiError } from "@/lib/services";
 
 export const useDebts = () => {
   const { user } = useAuthContext();
+  // Normalizar storeId del usuario
+  const storeId = useMemo(() => {
+    return user?.storeId || user?.store?.id;
+  }, [user?.storeId, user?.store?.id]);
+  
   const [payments, setPayments] = useState<DebtPayment[]>([]);
   const [clientsWithDebt, setClientsWithDebt] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,8 +23,8 @@ export const useDebts = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log("💰 Obteniendo clientes con deuda...");
-      const clients = await debtService.getClientsWithDebt();
+      console.log("💰 Obteniendo clientes con deuda, storeId:", storeId);
+      const clients = await debtService.getClientsWithDebt(storeId);
       console.log("✅ Clientes con deuda obtenidos:", clients.length);
       setClientsWithDebt(clients);
     } catch (err: any) {
@@ -30,7 +35,7 @@ export const useDebts = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [storeId]);
 
   // Cargar total de deuda
   const fetchTotalDebt = useCallback(async () => {

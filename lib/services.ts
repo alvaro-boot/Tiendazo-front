@@ -157,9 +157,10 @@ export interface CategoryData {
 
 export interface ClientData {
   fullName: string;
-  email: string;
+  email?: string;
   phone: string;
-  address: string;
+  address?: string;
+  storeId: number;
 }
 
 // Servicios de autenticación
@@ -390,14 +391,19 @@ export const saleService = {
 
 // Servicios de clientes
 export const clientService = {
-  async getClients(filters?: { q?: string }): Promise<Client[]> {
-    const params = filters?.q ? `?q=${filters.q}` : "";
-    const response = await api.get(`/clients${params}`);
+  async getClients(filters?: { q?: string; storeId?: number }): Promise<Client[]> {
+    const params = new URLSearchParams();
+    if (filters?.q) params.append("q", filters.q);
+    if (filters?.storeId) params.append("storeId", filters.storeId.toString());
+    
+    const queryString = params.toString();
+    const response = await api.get(`/clients${queryString ? `?${queryString}` : ""}`);
     return response.data;
   },
 
-  async getClientsWithDebt(): Promise<Client[]> {
-    const response = await api.get("/clients/with-debt");
+  async getClientsWithDebt(storeId?: number): Promise<Client[]> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/clients/with-debt${params}`);
     return response.data;
   },
 

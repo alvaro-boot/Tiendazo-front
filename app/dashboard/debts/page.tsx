@@ -15,8 +15,10 @@ import { PaymentDialog } from "@/components/debts/payment-dialog"
 import { DebtDetailDialog } from "@/components/debts/debt-detail-dialog"
 
 export default function DebtsPage() {
+  const { user } = useAuthContext()
+  const storeId = user?.storeId || user?.store?.id
   const { clientsDebtInfo, totalDebt, loading, error, fetchClientsWithDebt, getDebtsReport } = useDebts()
-  const { clients } = useClients()
+  const { clients } = useClients(storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useClients } from "@/hooks/use-api"
+import { useAuthContext } from "@/lib/auth-context"
 import { Client } from "@/lib/services"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +13,9 @@ import { Plus, Search, Pencil, Trash2, Users, DollarSign } from "lucide-react"
 import { ClientDialog } from "@/components/clients/client-dialog"
 
 export default function ClientsPage() {
-  const { clients, deleteClient, fetchClients } = useClients()
+  const { user } = useAuthContext()
+  const storeId = user?.storeId || user?.store?.id
+  const { clients, deleteClient, fetchClients } = useClients(storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)

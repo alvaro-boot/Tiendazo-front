@@ -8,11 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useClients } from '@/hooks/use-api';
+import { useAuthContext } from '@/lib/auth-context';
 import { ClientData } from '@/lib/services';
 import { Plus, Users, AlertTriangle } from 'lucide-react';
 
 export function ClientsPage() {
-  const { clients, loading, error, createClient, updateClient, deleteClient } = useClients();
+  const { user } = useAuthContext();
+  const storeId = user?.storeId || user?.store?.id;
+  const { clients, loading, error, createClient, updateClient, deleteClient } = useClients(storeId);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [formData, setFormData] = useState<ClientData>({

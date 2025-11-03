@@ -34,9 +34,10 @@ interface CartItem {
 }
 
 export function NewSale() {
-  const { clients } = useClients();
-  const { createSale } = useSales();
   const { user } = useAuthContext();
+  const storeId = user?.storeId || user?.store?.id;
+  const { clients } = useClients(storeId);
+  const { createSale } = useSales(storeId);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>("general");

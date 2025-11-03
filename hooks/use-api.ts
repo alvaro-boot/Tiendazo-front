@@ -193,24 +193,40 @@ export const useProducts = (storeId?: number) => {
 };
 
 // Hook para clientes
-export const useClients = () => {
+export const useClients = (storeId?: number) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchClients = async () => {
+  // Usar useCallback para memoizar fetchClients y evitar recreaciones innecesarias
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await clientService.getClients();
+      console.log("👥 Obteniendo clientes, storeId:", storeId);
+      const data = await clientService.getClients(storeId ? { storeId } : undefined);
+      console.log("✅ Clientes obtenidos:", data.length);
       setClients(data);
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage.message);
+      setClients([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [storeId]); // Solo recrear cuando cambie storeId
+
+  useEffect(() => {
+    // Solo ejecutar si hay un storeId válido
+    if (storeId !== undefined && storeId !== null) {
+      console.log("🔄 useClients: Ejecutando fetchClients para storeId:", storeId);
+      fetchClients();
+    } else {
+      console.log("⏸️ useClients: No hay storeId, no se cargarán clientes");
+      setLoading(false);
+      setClients([]);
+    }
+  }, [storeId, fetchClients]);
 
   const createClient = async (clientData: ClientData) => {
     try {
@@ -245,10 +261,6 @@ export const useClients = () => {
       throw errorMessage;
     }
   };
-
-  useEffect(() => {
-    fetchClients();
-  }, []);
 
   return {
     clients,
