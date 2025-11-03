@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useDebts } from "@/hooks/use-debts"
-import { Client, DebtPayment } from "@/lib/services"
+import { clientService, saleService } from "@/lib/services"
+import { Client, DebtPayment, Sale } from "@/lib/services"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
-import { DollarSign, Calendar, User, Phone, Mail } from "lucide-react"
+import { DollarSign, Calendar, User, Phone, Mail, ShoppingCart } from "lucide-react"
 
 interface DebtDetailDialogProps {
   client: Client | null
@@ -18,12 +19,16 @@ interface DebtDetailDialogProps {
 export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialogProps) {
   const { getClientPaymentHistory, loading } = useDebts()
   const [paymentHistory, setPaymentHistory] = useState<DebtPayment[]>([])
+  const [creditSales, setCreditSales] = useState<Sale[]>([])
+  const [loadingSales, setLoadingSales] = useState(false)
 
   useEffect(() => {
     if (open && client) {
       loadPaymentHistory()
+      loadCreditSales()
     } else {
       setPaymentHistory([])
+      setCreditSales([])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, client?.id])
@@ -42,10 +47,51 @@ export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialo
     }
   }
 
+  const loadCreditSales = async () => {
+    if (!client) return
+    
+    try {
+      setLoadingSales(true)
+      console.log("🛒 Cargando ventas fiadas para cliente:", client.id)
+      // Obtener cliente completo con ventas
+      const fullClient = await clientService.getClientById(client.id)
+      console.log("✅ Cliente obtenido:", { 
+        id: fullClient.id, 
+        salesCount: fullClient.sales?.length || 0 
+      })
+      
+      // Filtrar solo ventas a crédito y ordenar por fecha
+      const credit = (fullClient.sales || [])
+        .filter((sale: Sale) => sale.isCredit === true)
+        .sort((a: Sale, b: Sale) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      
+      console.log("✅ Ventas fiadas encontradas:", credit.length)
+      setCreditSales(credit)
+    } catch (error: any) {
+      console.error("❌ Error cargando ventas fiadas:", error)
+      setCreditSales([])
+    } finally {
+      setLoadingSales(false)
+    }
+  }
+
   if (!client) return null
 
-  const clientDebt = Number(client.debt || 0)
-  const totalPaid = paymentHistory.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+  // Convertir valores a números correctamente
+  const clientDebt = parseFloat(String(client.debt || 0))
+  const totalPaid = paymentHistory.reduce((sum, payment) => sum + parseFloat(String(payment.amount || 0)), 0)
+  
+  // Calcular deuda desde ventas fiadas
+  const totalFromSales = creditSales.reduce((sum, sale) => {
+    const saleTotal = parseFloat(String(sale.total || 0))
+    return sum + saleTotal
+  }, 0)
+  
+  // Calcular cuánto se ha pagado de las ventas fiadas
+  const totalFromSalesPaid = totalPaid
+  const calculatedDebt = totalFromSales - totalFromSalesPaid
 
   const getPaymentTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -123,10 +169,14 @@ export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialo
           {/* Resumen de deuda */}
           <Card className="border-2 bg-gradient-to-br from-amber-50 to-transparent dark:from-amber-950/20">
             <CardContent className="pt-6">
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Deuda Actual</p>
                   <p className="text-3xl font-bold text-red-600">${clientDebt.toFixed(2)}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground font-medium">Total de Ventas Fiadas</p>
+                  <p className="text-3xl font-bold text-blue-600">${totalFromSales.toFixed(2)}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Total Pagado</p>
@@ -139,6 +189,63 @@ export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialo
               </div>
             </CardContent>
           </Card>
+
+          {/* Ventas Fiadas */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              Ventas Fiadas ({creditSales.length})
+            </h3>
+            {loadingSales ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : creditSales.length === 0 ? (
+              <div className="text-center py-8 rounded-xl border-2 border-dashed bg-muted/50">
+                <p className="text-muted-foreground">No hay ventas fiadas registradas</p>
+                <p className="text-xs text-muted-foreground mt-1">Las ventas a crédito aparecerán aquí</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border-2 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b-2">
+                      <TableHead className="font-semibold">Factura</TableHead>
+                      <TableHead className="font-semibold">Fecha</TableHead>
+                      <TableHead className="text-right font-semibold">Total</TableHead>
+                      <TableHead className="text-right font-semibold">Ganancia</TableHead>
+                      <TableHead className="font-semibold">Productos</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {creditSales.map((sale: Sale) => {
+                      const saleTotal = parseFloat(String(sale.total || 0))
+                      const saleProfit = parseFloat(String(sale.profit || 0))
+                      return (
+                        <TableRow key={sale.id} className="hover:bg-muted/50 transition-colors">
+                          <TableCell className="font-medium">
+                            {sale.invoiceNumber || `V-${sale.id}`}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(sale.createdAt).toLocaleDateString("es-ES")}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-red-600">
+                            ${saleTotal.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            ${saleProfit.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {sale.details?.length || 0} {sale.details?.length === 1 ? "producto" : "productos"}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
 
           {/* Historial de pagos */}
           <div>

@@ -36,7 +36,9 @@ export const useDebts = () => {
   const fetchTotalDebt = useCallback(async () => {
     try {
       const result = await debtService.getTotalDebt();
-      setTotalDebt(Number(result.total || 0));
+      // Convertir valores a números correctamente para asegurar precisión
+      const total = parseFloat(String(result.total || 0));
+      setTotalDebt(total);
     } catch (err: any) {
       console.error("❌ Error obteniendo total de deuda:", err);
       setTotalDebt(0);
@@ -130,9 +132,12 @@ export const useDebts = () => {
         ? clientPayments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
         : undefined;
 
+      // Convertir valores a números correctamente para asegurar precisión
+      const debtValue = parseFloat(String(client.debt || 0));
+      
       return {
         client,
-        totalDebt: Number(client.debt || 0),
+        totalDebt: debtValue,
         lastPayment,
         paymentCount: clientPayments.length,
       };
