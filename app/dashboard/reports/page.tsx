@@ -83,34 +83,68 @@ export default function ReportsPage() {
 
       console.log("📤 Filtrando ventas con:", { filters, currentStoreId, userStoreId: user?.storeId, userStore: user?.store })
 
-      // Usar getSalesReport para obtener datos completos incluyendo topProducts, topCreditProducts, topClientsDebt
-      const report = await saleService.getSalesReport(filters)
-      const validSales = Array.isArray(report.sales) ? report.sales : []
-      setFilteredSales(validSales)
-      
-      // Usar datos del reporte del backend
-      setReportData({
-        totalRevenue: report.summary.totalSales || 0,
-        totalProfit: report.summary.totalProfit || 0,
-        totalCount: report.summary.totalCount || 0,
-        creditSales: report.summary.creditSales || 0,
-        cashSales: report.summary.cashSales || 0,
-        averageTicket: report.summary.averageSale || 0,
-        topProducts: report.topProducts || [],
-        topCreditProducts: report.topCreditProducts || [],
-        topClientsDebt: report.topClientsDebt || [],
-        sales: validSales,
-      })
+      try {
+        // Usar getSalesReport para obtener datos completos incluyendo topProducts, topCreditProducts, topClientsDebt
+        const report = await saleService.getSalesReport(filters)
+        console.log("📊 Reporte recibido del backend:", report)
+        
+        const validSales = Array.isArray(report.sales) ? report.sales : []
+        setFilteredSales(validSales)
+        
+        // Usar datos del reporte del backend
+        setReportData({
+          totalRevenue: report.summary?.totalSales || 0,
+          totalProfit: report.summary?.totalProfit || 0,
+          totalCount: report.summary?.totalCount || 0,
+          creditSales: report.summary?.creditSales || 0,
+          cashSales: report.summary?.cashSales || 0,
+          averageTicket: report.summary?.averageSale || 0,
+          topProducts: report.topProducts || [],
+          topCreditProducts: report.topCreditProducts || [],
+          topClientsDebt: report.topClientsDebt || [],
+          sales: validSales,
+        })
 
-      console.log("📊 Reporte generado:", {
-        totalRevenue,
-        totalProfit,
-        totalCount,
-        creditSales,
-        cashSales,
-        averageTicket,
-        salesCount: validSales.length,
-      })
+        console.log("📊 Reporte generado:", {
+          totalRevenue: report.summary?.totalSales || 0,
+          totalProfit: report.summary?.totalProfit || 0,
+          totalCount: report.summary?.totalCount || 0,
+          creditSales: report.summary?.creditSales || 0,
+          cashSales: report.summary?.cashSales || 0,
+          averageTicket: report.summary?.averageSale || 0,
+          salesCount: validSales.length,
+          topProductsCount: report.topProducts?.length || 0,
+          topCreditProductsCount: report.topCreditProducts?.length || 0,
+          topClientsDebtCount: report.topClientsDebt?.length || 0,
+        })
+      } catch (reportError: any) {
+        console.error("❌ Error obteniendo reporte:", reportError)
+        // Si falla el reporte, intentar obtener solo las ventas
+        const salesData = await saleService.getSales(filters)
+        const validSales = Array.isArray(salesData) ? salesData : []
+        setFilteredSales(validSales)
+        
+        // Calcular datos básicos del reporte
+        const totalRevenue = validSales.reduce((sum: number, sale: any) => sum + Number(sale.total || 0), 0)
+        const totalProfit = validSales.reduce((sum: number, sale: any) => sum + Number(sale.profit || 0), 0)
+        const totalCount = validSales.length
+        const creditSales = validSales.filter((s: any) => s.isCredit).length
+        const cashSales = totalCount - creditSales
+        const averageTicket = totalCount > 0 ? totalRevenue / totalCount : 0
+
+        setReportData({
+          totalRevenue,
+          totalProfit,
+          totalCount,
+          creditSales,
+          cashSales,
+          averageTicket,
+          topProducts: [],
+          topCreditProducts: [],
+          topClientsDebt: [],
+          sales: validSales,
+        })
+      }
     } catch (error: any) {
       console.error("❌ Error cargando reporte:", error)
       setFilteredSales([])

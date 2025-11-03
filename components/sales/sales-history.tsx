@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, Eye, ShoppingCart, TrendingUp, DollarSign, Trash2 } from "lucide-react"
+import { Search, Eye, ShoppingCart, TrendingUp, DollarSign, Trash2, Calendar, Filter } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 
 export function SalesHistory() {
   const { user, isAdmin } = useAuthContext()
@@ -20,64 +21,71 @@ export function SalesHistory() {
     return user?.storeId || user?.store?.id
   }, [user?.storeId, user?.store?.id])
   
-  const { sales, fetchSales, loading, deleteSale } = useSales(storeId)
+  const { fetchSales, loading, deleteSale } = useSales(storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
+  
+  // Filtros de fecha - por defecto día actual
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date()
+    return today.toISOString().split("T")[0]
+  })
+  const [dateFilter, setDateFilter] = useState<"today" | "custom">("today")
+  
+  // Cargar ventas filtradas por fecha
+  const [sales, setSales] = useState<Sale[]>([])
+  
+  // Cargar ventas con filtro de fecha cuando cambie selectedDate o storeId
+  useEffect(() => {
+    if (storeId) {
+      let filters: any = { storeId }
+      
+      if (dateFilter === "today") {
+        // Cargar ventas del día actual
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(today)
+        endOfDay.setHours(23, 59, 59, 999)
+        
+        filters.startDate = today.toISOString().split("T")[0]
+        filters.endDate = endOfDay.toISOString().split("T")[0]
+      } else if (dateFilter === "custom" && selectedDate) {
+        // Cargar ventas de la fecha seleccionada
+        const startOfDay = new Date(selectedDate)
+        startOfDay.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(selectedDate)
+        endOfDay.setHours(23, 59, 59, 999)
+        
+        filters.startDate = startOfDay.toISOString().split("T")[0]
+        filters.endDate = endOfDay.toISOString().split("T")[0]
+      }
+      
+      console.log("📅 Cargando ventas con filtros:", filters)
+      saleService.getSales(filters).then((data) => {
+        console.log("✅ Ventas cargadas:", data.length)
+        setSales(data)
+      }).catch((err) => {
+        console.error("❌ Error cargando ventas:", err)
+        setSales([])
+      })
+    } else {
+      setSales([])
+    }
+  }, [storeId, selectedDate, dateFilter])
 
-  // El hook useSales ya carga las ventas automáticamente cuando cambia storeId
-  // No necesitamos llamar fetchSales manualmente aquí para evitar bucles infinitos
-  // Solo usamos fetchSales si el usuario quiere refrescar manualmente
-
-  // Ya viene filtrado por tienda desde el hook useSales, pero por seguridad filtramos de nuevo
+  // Las ventas ya vienen filtradas por fecha desde el backend, solo necesitamos filtrar por tienda
   const filteredSalesByStore = useMemo(() => {
     const currentStoreId = storeId || user?.storeId || user?.store?.id
     
-    console.log("🔍 Procesando ventas:", {
-      total: sales.length,
-      storeId: currentStoreId,
-      userStoreId: user?.storeId,
-      userStoreIdFromStore: user?.store?.id,
-      sales: sales.map(s => ({
-        id: s.id,
-        storeId: s.storeId,
-        invoiceNumber: s.invoiceNumber,
-        total: s.total,
-      })),
-    })
-    
     if (!currentStoreId) {
-      console.warn("⚠️ No storeId, retornando array vacío", {
-        user,
-        storeId,
-        userStoreId: user?.storeId,
-        userStore: user?.store,
-      })
+      console.warn("⚠️ No storeId, retornando array vacío")
       return []
     }
     
-    const filtered = sales.filter((sale) => {
-      const matches = sale.storeId === currentStoreId
-      if (!matches) {
-        console.log("🔍 Venta filtrada:", { saleId: sale.id, saleStoreId: sale.storeId, userStoreId: currentStoreId })
-      }
-      return matches
+    // Las ventas ya vienen filtradas por fecha desde el backend
+    return sales.filter((sale) => {
+      return sale.storeId === currentStoreId
     })
-    
-    console.log("✅ Ventas filtradas:", {
-      total: sales.length,
-      filtradas: filtered.length,
-      storeId: currentStoreId,
-      ventas: filtered.slice(0, 3).map(s => ({
-        id: s.id,
-        invoiceNumber: s.invoiceNumber,
-        total: s.total,
-        profit: s.profit,
-        hasDetails: !!s.details,
-        detailsCount: s.details?.length || 0,
-      })),
-    })
-    
-    return filtered
   }, [sales, storeId, user?.storeId, user?.store])
 
   const filteredSales = useMemo(() => {
@@ -99,8 +107,68 @@ export function SalesHistory() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Filtros de fecha */}
+      <Card className="border-2 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-primary" />
+            Filtros de Fecha
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant={dateFilter === "today" ? "default" : "outline"}
+                onClick={() => {
+                  setDateFilter("today")
+                  const today = new Date()
+                  setSelectedDate(today.toISOString().split("T")[0])
+                }}
+                className="transition-all hover:scale-105"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Hoy
+              </Button>
+              <Button
+                variant={dateFilter === "custom" ? "default" : "outline"}
+                onClick={() => setDateFilter("custom")}
+                className="transition-all hover:scale-105"
+              >
+                Fecha Personalizada
+              </Button>
+            </div>
+            {dateFilter === "custom" && (
+              <div className="space-y-2 flex-1 sm:max-w-xs">
+                <Label htmlFor="selectedDate" className="text-sm font-medium">
+                  Seleccionar Fecha
+                </Label>
+                <Input
+                  id="selectedDate"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="h-11 border-2 focus:border-primary transition-colors"
+                />
+              </div>
+            )}
+            {dateFilter === "today" && (
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Mostrando ventas del {new Date(selectedDate).toLocaleDateString("es-ES", { 
+                  weekday: "long", 
+                  year: "numeric", 
+                  month: "long", 
+                  day: "numeric" 
+                })}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Cards de estadísticas mejoradas */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
         <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
