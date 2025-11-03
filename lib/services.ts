@@ -184,6 +184,20 @@ export const authService = {
     const response = await api.post("/auth/refresh");
     return response.data;
   },
+
+  async getAllUsers(): Promise<User[]> {
+    const response = await api.get("/auth/users");
+    return response.data;
+  },
+
+  async updateUser(id: number, data: Partial<RegisterData>): Promise<User> {
+    const response = await api.patch(`/auth/users/${id}`, data);
+    return response.data;
+  },
+
+  async deleteUser(id: number): Promise<void> {
+    await api.delete(`/auth/users/${id}`);
+  },
 };
 
 // Servicios de tiendas

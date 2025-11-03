@@ -19,7 +19,7 @@ import { User, UserPlus } from "lucide-react";
 
 export function EmployeeRegisterForm() {
   const router = useRouter();
-  const { register, isAdmin } = useAuthContext();
+  const { register, isAdmin, user } = useAuthContext();
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -53,13 +53,33 @@ export function EmployeeRegisterForm() {
     try {
       console.log("🔍 Registrando nuevo empleado...");
 
+      // Obtener el storeId del usuario admin actual
+      const storeId = user?.storeId || user?.store?.id;
+      
+      if (!storeId) {
+        setError("No se pudo obtener la tienda del administrador");
+        return;
+      }
+
+      console.log("📤 Datos del empleado a registrar:", {
+        username,
+        fullName,
+        email,
+        role: "EMPLOYEE",
+        storeId,
+        password: "***",
+      });
+
       const result = await register({
         username,
         fullName,
         email,
         password,
         role: "EMPLOYEE", // Solo empleados
+        storeId: storeId, // Asignar la tienda del admin
       });
+
+      console.log("✅ Empleado registrado exitosamente con storeId:", result.storeId || result.store?.id);
 
       console.log("✅ Empleado registrado exitosamente:", result);
 

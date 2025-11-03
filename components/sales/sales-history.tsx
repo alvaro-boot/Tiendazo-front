@@ -3,24 +3,24 @@
 import { useState, useMemo, useEffect } from "react"
 import { useSales } from "@/hooks/use-api"
 import { useAuthContext } from "@/lib/auth-context"
-import { Sale } from "@/lib/services"
+import { Sale, saleService } from "@/lib/services"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, Eye, ShoppingCart, TrendingUp, DollarSign } from "lucide-react"
+import { Search, Eye, ShoppingCart, TrendingUp, DollarSign, Trash2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export function SalesHistory() {
-  const { user } = useAuthContext()
+  const { user, isAdmin } = useAuthContext()
   // Normalizar storeId para usar store.id si storeId no está disponible
   // Usar useMemo para evitar recalcular en cada render
   const storeId = useMemo(() => {
     return user?.storeId || user?.store?.id
   }, [user?.storeId, user?.store?.id])
   
-  const { sales, fetchSales, loading } = useSales(storeId)
+  const { sales, fetchSales, loading, deleteSale } = useSales(storeId)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
 
@@ -211,14 +211,35 @@ export function SalesHistory() {
                     </TableCell>
                     <TableCell className="text-right font-bold text-lg text-primary">${Number(sale.total).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setSelectedSale(sale)}
-                        className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setSelectedSale(sale)}
+                          className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={async () => {
+                              if (confirm(`¿Estás seguro de eliminar la venta ${sale.invoiceNumber}?`)) {
+                                try {
+                                  await deleteSale(sale.id);
+                                  alert("Venta eliminada exitosamente");
+                                } catch (error: any) {
+                                  alert(`Error al eliminar venta: ${error.message || "Error desconocido"}`);
+                                }
+                              }
+                            }}
+                            className="hover:bg-destructive/10 hover:text-destructive transition-all hover:scale-110"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

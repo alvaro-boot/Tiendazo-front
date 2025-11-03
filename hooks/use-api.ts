@@ -344,9 +344,6 @@ export const useSales = (storeId?: number) => {
     }
   };
 
-  useEffect(() => {
-    fetchSales();
-  }, [storeId]);
 
   return {
     sales,

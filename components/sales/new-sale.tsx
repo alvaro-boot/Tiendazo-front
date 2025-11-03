@@ -202,7 +202,7 @@ export function NewSale() {
         notes:
           notes ||
           `Venta ${paymentMethod === "credit" ? "a crédito" : "al contado"}`,
-        storeId: user?.storeId || 1,
+        storeId: storeId || user?.storeId || user?.store?.id,
         clientId:
           selectedClient !== "general" ? parseInt(selectedClient) : undefined,
         details: saleDetails,
