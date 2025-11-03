@@ -204,6 +204,7 @@ export default function ProductsPage() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <ProductDialog product={selectedProduct} open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen} />
