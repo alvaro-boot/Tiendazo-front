@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import { useStore, type Debt, type DebtPayment } from "@/lib/store"
+import { useState, useEffect } from "react"
+import { useDebts } from "@/hooks/use-debts"
+import { Client } from "@/lib/services"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,120 +19,190 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface PaymentDialogProps {
-  debt: Debt | null
+  client: Client | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function PaymentDialog({ debt, open, onOpenChange }: PaymentDialogProps) {
-  const { clients, addPayment } = useStore()
+export function PaymentDialog({ client, open, onOpenChange, onSuccess }: PaymentDialogProps) {
+  const { registerPayment, loading } = useDebts()
   const [amount, setAmount] = useState("")
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer">("cash")
+  const [paymentType, setPaymentType] = useState<"CASH" | "TRANSFER" | "CARD" | "OTHER">("CASH")
+  const [reference, setReference] = useState("")
   const [notes, setNotes] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Resetear formulario cuando se abre/cierra
+  useEffect(() => {
+    if (open && client) {
+      setAmount("")
+      setPaymentType("CASH")
+      setReference("")
+      setNotes("")
+      setError(null)
+    }
+  }, [open, client])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
 
-    if (!debt) return
+    if (!client) return
 
     const paymentAmount = Number.parseFloat(amount)
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      alert("Ingresa un monto válido")
+      setError("Ingresa un monto válido")
       return
     }
 
-    if (paymentAmount > debt.remaining) {
-      alert("El monto no puede ser mayor a la deuda restante")
+    const clientDebt = Number(client.debt || 0)
+    if (paymentAmount > clientDebt) {
+      setError(`El monto no puede ser mayor a la deuda restante ($${clientDebt.toFixed(2)})`)
       return
     }
 
-    const newPayment: DebtPayment = {
-      id: `payment-${Date.now()}`,
-      debtId: debt.id,
-      amount: paymentAmount,
-      paymentMethod,
-      createdAt: new Date().toISOString(),
-      notes: notes || undefined,
+    try {
+      await registerPayment({
+        clientId: client.id,
+        amount: paymentAmount,
+        paymentType,
+        reference: reference || undefined,
+        notes: notes || undefined,
+      })
+
+      setAmount("")
+      setReference("")
+      setNotes("")
+      setPaymentType("CASH")
+      onOpenChange(false)
+      
+      if (onSuccess) {
+        onSuccess()
+      }
+    } catch (err: any) {
+      setError(err.message || "Error al registrar el pago")
+      console.error("❌ Error en PaymentDialog:", err)
     }
-
-    addPayment(debt.id, newPayment)
-
-    setAmount("")
-    setNotes("")
-    setPaymentMethod("cash")
-    onOpenChange(false)
   }
 
-  if (!debt) return null
+  if (!client) return null
 
-  const client = clients.find((c) => c.id === debt.clientId)
+  const clientDebt = Number(client.debt || 0)
+  const paymentAmount = Number.parseFloat(amount) || 0
+  const newDebt = clientDebt - paymentAmount
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Registrar Pago</DialogTitle>
-          <DialogDescription>Cliente: {client?.name}</DialogDescription>
+          <DialogTitle className="text-xl">Registrar Pago</DialogTitle>
+          <DialogDescription>
+            Cliente: <span className="font-semibold">{client.fullName}</span>
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-lg border p-4">
+          <div className="rounded-xl border-2 border-amber-200 bg-amber-50 dark:bg-amber-950/20 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Deuda Restante</span>
-              <span className="text-2xl font-bold">${debt.remaining.toFixed(2)}</span>
+              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Deuda Actual</span>
+              <span className="text-2xl font-bold text-red-600">${clientDebt.toFixed(2)}</span>
             </div>
           </div>
 
+          {error && (
+            <div className="rounded-xl bg-destructive/10 border-2 border-destructive/20 p-3">
+              <p className="text-sm font-medium text-destructive">⚠️ {error}</p>
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="amount">Monto a Pagar *</Label>
+            <Label htmlFor="amount" className="font-semibold">Monto a Pagar *</Label>
             <Input
               id="amount"
               type="number"
               step="0.01"
               min="0.01"
-              max={debt.remaining}
+              max={clientDebt}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              className="h-11 border-2 focus:border-primary transition-colors"
               required
+              disabled={loading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Método de Pago</Label>
-            <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
-              <SelectTrigger>
+            <Label className="font-semibold">Método de Pago</Label>
+            <Select 
+              value={paymentType} 
+              onValueChange={(value: any) => setPaymentType(value)}
+              disabled={loading}
+            >
+              <SelectTrigger className="h-11 border-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cash">Efectivo</SelectItem>
-                <SelectItem value="card">Tarjeta</SelectItem>
-                <SelectItem value="transfer">Transferencia</SelectItem>
+                <SelectItem value="CASH">Efectivo</SelectItem>
+                <SelectItem value="CARD">Tarjeta</SelectItem>
+                <SelectItem value="TRANSFER">Transferencia</SelectItem>
+                <SelectItem value="OTHER">Otro</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notas (Opcional)</Label>
-            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <Label htmlFor="reference">Referencia (Opcional)</Label>
+            <Input
+              id="reference"
+              type="text"
+              placeholder="Número de transferencia, comprobante, etc."
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              className="h-11 border-2 focus:border-primary transition-colors"
+              disabled={loading}
+            />
           </div>
 
-          {amount && Number.parseFloat(amount) > 0 && (
-            <div className="rounded-lg border p-4">
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notas (Opcional)</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="border-2 focus:border-primary transition-colors"
+              rows={3}
+              disabled={loading}
+            />
+          </div>
+
+          {amount && paymentAmount > 0 && (
+            <div className="rounded-xl border-2 border-green-200 bg-green-50 dark:bg-green-950/20 p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Nuevo Saldo</span>
-                <span className="text-xl font-bold">${(debt.remaining - Number.parseFloat(amount)).toFixed(2)}</span>
+                <span className="text-sm font-medium text-green-900 dark:text-green-100">Nuevo Saldo</span>
+                <span className="text-xl font-bold text-green-600">
+                  ${newDebt.toFixed(2)}
+                </span>
               </div>
             </div>
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancelar
             </Button>
-            <Button type="submit">Registrar Pago</Button>
+            <Button type="submit" disabled={loading || !amount || paymentAmount <= 0}>
+              {loading ? "Registrando..." : "Registrar Pago"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   )
 }
+

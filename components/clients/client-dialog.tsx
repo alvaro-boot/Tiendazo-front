@@ -53,11 +53,12 @@ export function ClientDialog({ client, open, onOpenChange }: ClientDialogProps) 
 
   const onSubmit = async (data: ClientFormData) => {
     try {
+      // Limpiar email vacío - enviar undefined en lugar de cadena vacía
       const clientData: ClientData = {
         fullName: data.fullName,
         phone: data.phone,
-        email: data.email || "",
-        address: data.address || "",
+        email: data.email && data.email.trim() !== "" ? data.email.trim() : undefined,
+        address: data.address && data.address.trim() !== "" ? data.address.trim() : undefined,
       }
 
       if (client) {

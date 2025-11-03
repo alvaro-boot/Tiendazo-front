@@ -609,7 +609,21 @@ export interface DebtPayment {
   paymentType: "CASH" | "TRANSFER" | "CARD" | "OTHER";
   reference?: string;
   notes?: string;
+  userId: number;
+  previousDebt: number;
+  newDebt: number;
   createdAt: string;
+  updatedAt?: string;
+  client?: Client;
+  user?: User;
+}
+
+// Interfaz para representar un cliente con deuda para la UI
+export interface ClientDebtInfo {
+  client: Client;
+  totalDebt: number;
+  lastPayment?: DebtPayment;
+  paymentCount: number;
 }
 
 // Servicios de fiados
@@ -622,6 +636,11 @@ export const debtService = {
     notes?: string;
   }): Promise<DebtPayment> {
     const response = await api.post("/debts/payment", paymentData);
+    return response.data;
+  },
+
+  async getPaymentById(id: number): Promise<DebtPayment> {
+    const response = await api.get(`/debts/payments/${id}`);
     return response.data;
   },
 
@@ -660,12 +679,9 @@ export const debtService = {
 
   async getTotalDebt(): Promise<{ total: number }> {
     const response = await api.get("/debts/total-debt");
-    return response.data;
-  },
-
-  async getPaymentById(id: number): Promise<DebtPayment> {
-    const response = await api.get(`/debts/payments/${id}`);
-    return response.data;
+    // El backend devuelve directamente un número, normalizar a objeto
+    const total = typeof response.data === 'number' ? response.data : response.data.total || 0;
+    return { total };
   },
 
   async getClientPaymentHistory(clientId: number): Promise<DebtPayment[]> {

@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useSales } from "@/hooks/use-api"
+import { useDebts } from "@/hooks/use-debts"
 import { useAuthContext } from "@/lib/auth-context"
-import { saleService } from "@/lib/services"
+import { saleService, debtService } from "@/lib/services"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 import { 
   BarChart, 
   Bar, 
@@ -25,7 +27,7 @@ import {
   Cell,
   Legend
 } from "recharts"
-import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, Filter } from "lucide-react"
+import { TrendingUp, DollarSign, ShoppingCart, Calendar, Download, Filter, AlertCircle } from "lucide-react"
 
 export default function ReportsPage() {
   const { user } = useAuthContext()
@@ -40,6 +42,8 @@ export default function ReportsPage() {
   const [endDate, setEndDate] = useState<string>("")
   const [filteredSales, setFilteredSales] = useState<any[]>([])
   const [reportData, setReportData] = useState<any>(null)
+  const [debtsReportData, setDebtsReportData] = useState<any>(null)
+  const [debtsLoading, setDebtsLoading] = useState(false)
 
   // Establecer fechas por defecto (último mes)
   useEffect(() => {
@@ -51,11 +55,12 @@ export default function ReportsPage() {
     setEndDate(end.toISOString().split("T")[0])
   }, [])
 
-  // Cargar ventas al montar y cuando cambien las fechas
+  // Cargar reportes cuando cambien las fechas
   useEffect(() => {
     if (storeId && startDate && endDate) {
-      console.log("🔄 Cargando reporte con filtros:", { storeId, startDate, endDate })
+      console.log("🔄 Cargando reportes con filtros:", { storeId, startDate, endDate })
       loadSales()
+      loadDebtsReport()
     } else {
       console.log("⏳ Esperando datos:", { 
         hasUser: !!user, 
@@ -66,6 +71,7 @@ export default function ReportsPage() {
         hasDates: !!(startDate && endDate) 
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, startDate, endDate])
 
   const loadSales = async () => {
@@ -78,13 +84,14 @@ export default function ReportsPage() {
       console.log("📤 Filtrando ventas con:", { filters, currentStoreId, userStoreId: user?.storeId, userStore: user?.store })
 
       const salesData = await saleService.getSales(filters)
-      setFilteredSales(salesData)
+      const validSales = Array.isArray(salesData) ? salesData : []
+      setFilteredSales(validSales)
       
       // Calcular datos del reporte
-      const totalRevenue = salesData.reduce((sum: number, sale: any) => sum + Number(sale.total || 0), 0)
-      const totalProfit = salesData.reduce((sum: number, sale: any) => sum + Number(sale.profit || 0), 0)
-      const totalCount = salesData.length
-      const creditSales = salesData.filter((s: any) => s.isCredit).length
+      const totalRevenue = validSales.reduce((sum: number, sale: any) => sum + Number(sale.total || 0), 0)
+      const totalProfit = validSales.reduce((sum: number, sale: any) => sum + Number(sale.profit || 0), 0)
+      const totalCount = validSales.length
+      const creditSales = validSales.filter((s: any) => s.isCredit).length
       const cashSales = totalCount - creditSales
       const averageTicket = totalCount > 0 ? totalRevenue / totalCount : 0
 
@@ -95,7 +102,7 @@ export default function ReportsPage() {
         creditSales,
         cashSales,
         averageTicket,
-        sales: salesData,
+        sales: validSales,
       })
 
       console.log("📊 Reporte generado:", {
@@ -105,11 +112,28 @@ export default function ReportsPage() {
         creditSales,
         cashSales,
         averageTicket,
+        salesCount: validSales.length,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error cargando reporte:", error)
       setFilteredSales([])
       setReportData(null)
+    }
+  }
+
+  const loadDebtsReport = async () => {
+    try {
+      console.log("💰 Cargando reporte de deudas...")
+      const filters: any = {}
+      if (startDate) filters.startDate = startDate
+      if (endDate) filters.endDate = endDate
+
+      const report = await debtService.getDebtsReport(filters)
+      console.log("✅ Reporte de deudas obtenido:", report)
+      setDebtsReportData(report)
+    } catch (error: any) {
+      console.error("❌ Error cargando reporte de deudas:", error)
+      setDebtsReportData(null)
     }
   }
 
@@ -308,10 +332,11 @@ export default function ReportsPage() {
         </Card>
       ) : (
         <Tabs defaultValue="summary" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="summary">Resumen</TabsTrigger>
             <TabsTrigger value="sales">Ventas</TabsTrigger>
             <TabsTrigger value="products">Productos</TabsTrigger>
+            <TabsTrigger value="debts">Fiados</TabsTrigger>
             <TabsTrigger value="charts">Gráficos</TabsTrigger>
           </TabsList>
 
@@ -517,6 +542,154 @@ export default function ReportsPage() {
                     )}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="debts" className="space-y-6">
+            <Card className="border-2 shadow-lg">
+              <CardHeader>
+                <CardTitle>Reporte de Fiados y Pagos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                  </div>
+                ) : !debtsReportData ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p>No hay datos de deudas para el período seleccionado</p>
+                    <p className="text-xs mt-1">Selecciona un rango de fechas para ver el reporte</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Estadísticas de deudas */}
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <Card className="border-2">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Total Pagado</CardTitle>
+                          <DollarSign className="h-5 w-5 text-green-500" />
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-green-600">
+                            ${debtsReportData.summary?.totalPayments?.toFixed(2) || "0.00"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">En el período</p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-2">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Total Pagos</CardTitle>
+                          <ShoppingCart className="h-5 w-5 text-blue-500" />
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold">
+                            {debtsReportData.summary?.totalCount || 0}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">Pagos registrados</p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-2">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Pago Promedio</CardTitle>
+                          <TrendingUp className="h-5 w-5 text-purple-500" />
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold">
+                            ${debtsReportData.summary?.averagePayment?.toFixed(2) || "0.00"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">Por transacción</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Pagos por tipo */}
+                    {debtsReportData.summary?.paymentsByType && (
+                      <Card className="border-2">
+                        <CardHeader>
+                          <CardTitle>Pagos por Tipo</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Tipo de Pago</TableHead>
+                                <TableHead className="text-right">Cantidad</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {Object.entries(debtsReportData.summary.paymentsByType).map(([type, data]: [string, any]) => (
+                                <TableRow key={type}>
+                                  <TableCell className="font-medium capitalize">
+                                    {type === "CASH" ? "Efectivo" : 
+                                     type === "CARD" ? "Tarjeta" :
+                                     type === "TRANSFER" ? "Transferencia" : type}
+                                  </TableCell>
+                                  <TableCell className="text-right">{data.count}</TableCell>
+                                  <TableCell className="text-right font-semibold">
+                                    ${data.total.toFixed(2)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Listado de pagos */}
+                    {debtsReportData.payments && debtsReportData.payments.length > 0 && (
+                      <Card className="border-2">
+                        <CardHeader>
+                          <CardTitle>Historial de Pagos</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Cliente</TableHead>
+                                <TableHead>Fecha</TableHead>
+                                <TableHead>Tipo</TableHead>
+                                <TableHead className="text-right">Monto</TableHead>
+                                <TableHead className="text-right">Deuda Anterior</TableHead>
+                                <TableHead className="text-right">Deuda Nueva</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {debtsReportData.payments.map((payment: any) => (
+                                <TableRow key={payment.id}>
+                                  <TableCell className="font-medium">
+                                    {payment.client?.fullName || `Cliente ${payment.clientId}`}
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground">
+                                    {new Date(payment.createdAt).toLocaleDateString("es-ES")}
+                                  </TableCell>
+                                  <TableCell>
+                                    {payment.paymentType === "CASH" ? "Efectivo" :
+                                     payment.paymentType === "CARD" ? "Tarjeta" :
+                                     payment.paymentType === "TRANSFER" ? "Transferencia" : payment.paymentType}
+                                  </TableCell>
+                                  <TableCell className="text-right font-semibold text-green-600">
+                                    ${Number(payment.amount || 0).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="text-right text-muted-foreground">
+                                    ${Number(payment.previousDebt || 0).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="text-right font-semibold text-red-600">
+                                    ${Number(payment.newDebt || 0).toFixed(2)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
