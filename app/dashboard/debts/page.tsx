@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useDebts } from "@/hooks/use-debts"
+import { useAuthContext } from "@/lib/auth-context"
 import { useClients } from "@/hooks/use-api"
 import { Client, DebtPayment } from "@/lib/services"
 import { Button } from "@/components/ui/button"
