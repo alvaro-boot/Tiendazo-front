@@ -83,25 +83,22 @@ export default function ReportsPage() {
 
       console.log("📤 Filtrando ventas con:", { filters, currentStoreId, userStoreId: user?.storeId, userStore: user?.store })
 
-      const salesData = await saleService.getSales(filters)
-      const validSales = Array.isArray(salesData) ? salesData : []
+      // Usar getSalesReport para obtener datos completos incluyendo topProducts, topCreditProducts, topClientsDebt
+      const report = await saleService.getSalesReport(filters)
+      const validSales = Array.isArray(report.sales) ? report.sales : []
       setFilteredSales(validSales)
       
-      // Calcular datos del reporte
-      const totalRevenue = validSales.reduce((sum: number, sale: any) => sum + Number(sale.total || 0), 0)
-      const totalProfit = validSales.reduce((sum: number, sale: any) => sum + Number(sale.profit || 0), 0)
-      const totalCount = validSales.length
-      const creditSales = validSales.filter((s: any) => s.isCredit).length
-      const cashSales = totalCount - creditSales
-      const averageTicket = totalCount > 0 ? totalRevenue / totalCount : 0
-
+      // Usar datos del reporte del backend
       setReportData({
-        totalRevenue,
-        totalProfit,
-        totalCount,
-        creditSales,
-        cashSales,
-        averageTicket,
+        totalRevenue: report.summary.totalSales || 0,
+        totalProfit: report.summary.totalProfit || 0,
+        totalCount: report.summary.totalCount || 0,
+        creditSales: report.summary.creditSales || 0,
+        cashSales: report.summary.cashSales || 0,
+        averageTicket: report.summary.averageSale || 0,
+        topProducts: report.topProducts || [],
+        topCreditProducts: report.topCreditProducts || [],
+        topClientsDebt: report.topClientsDebt || [],
         sales: validSales,
       })
 
@@ -505,43 +502,196 @@ export default function ReportsPage() {
           </TabsContent>
 
           <TabsContent value="products" className="space-y-6">
+            {/* Productos más vendidos */}
             <Card className="border-2 shadow-lg">
               <CardHeader>
-                <CardTitle>Top 10 Productos Más Vendidos</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
+                  Top 10 Productos Más Vendidos
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Producto</TableHead>
-                      <TableHead className="text-right">Cantidad</TableHead>
-                      <TableHead className="text-right">Ingresos</TableHead>
-                      <TableHead className="text-right">Ganancia</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topProducts.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                          No hay productos vendidos en el período
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      topProducts.map((product, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{product.name}</TableCell>
-                          <TableCell className="text-right">{product.quantity}</TableCell>
-                          <TableCell className="text-right font-semibold">
-                            ${product.revenue.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-green-600">
-                            ${product.profit.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                {reportData.topProducts && reportData.topProducts.length > 0 ? (
+                  <>
+                    <div className="mb-4 h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={reportData.topProducts.slice(0, 10)}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45} 
+                            textAnchor="end" 
+                            height={100}
+                            interval={0}
+                            fontSize={12}
+                          />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="quantity" fill="#8884d8" name="Cantidad Vendida" />
+                          <Bar dataKey="revenue" fill="#82ca9d" name="Ingresos ($)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>#</TableHead>
+                            <TableHead>Producto</TableHead>
+                            <TableHead className="text-right">Cantidad</TableHead>
+                            <TableHead className="text-right">Ingresos</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {reportData.topProducts.map((product: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-bold text-primary">{index + 1}</TableCell>
+                              <TableCell className="font-medium">{product.name}</TableCell>
+                              <TableCell className="text-right font-semibold">{product.quantity}</TableCell>
+                              <TableCell className="text-right font-semibold text-green-600">
+                                ${Number(product.revenue || 0).toFixed(2)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p>No hay productos vendidos en el período seleccionado</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Productos más fiados */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
+                  Top 10 Productos Más Fiados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {reportData.topCreditProducts && reportData.topCreditProducts.length > 0 ? (
+                  <>
+                    <div className="mb-4 h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={reportData.topCreditProducts.slice(0, 10)}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45} 
+                            textAnchor="end" 
+                            height={100}
+                            interval={0}
+                            fontSize={12}
+                          />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="quantity" fill="#ffc658" name="Cantidad Fiada" />
+                          <Bar dataKey="revenue" fill="#ff7c7c" name="Monto Fiado ($)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>#</TableHead>
+                            <TableHead>Producto</TableHead>
+                            <TableHead className="text-right">Cantidad Fiada</TableHead>
+                            <TableHead className="text-right">Monto Fiado</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {reportData.topCreditProducts.map((product: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-bold text-amber-600">{index + 1}</TableCell>
+                              <TableCell className="font-medium">{product.name}</TableCell>
+                              <TableCell className="text-right font-semibold">{product.quantity}</TableCell>
+                              <TableCell className="text-right font-semibold text-red-600">
+                                ${Number(product.revenue || 0).toFixed(2)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p>No hay productos fiados en el período seleccionado</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Clientes que más fían */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-red-500" />
+                  Top 10 Clientes que Más Fían
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {reportData.topClientsDebt && reportData.topClientsDebt.length > 0 ? (
+                  <>
+                    <div className="mb-4 h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={reportData.topClientsDebt.slice(0, 10)}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45} 
+                            textAnchor="end" 
+                            height={100}
+                            interval={0}
+                            fontSize={12}
+                          />
+                          <YAxis />
+                          <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+                          <Legend />
+                          <Bar dataKey="totalDebt" fill="#ff7c7c" name="Deuda Total ($)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>#</TableHead>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead className="text-right">Deuda Total</TableHead>
+                            <TableHead className="text-right">Ventas a Crédito</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {reportData.topClientsDebt.map((client: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-bold text-red-600">{index + 1}</TableCell>
+                              <TableCell className="font-medium">{client.name}</TableCell>
+                              <TableCell className="text-right font-semibold text-red-600">
+                                ${Number(client.totalDebt || 0).toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant="outline">{client.saleCount}</Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p>No hay clientes con deuda en el período seleccionado</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

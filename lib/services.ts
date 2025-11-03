@@ -185,8 +185,9 @@ export const authService = {
     return response.data;
   },
 
-  async getAllUsers(): Promise<User[]> {
-    const response = await api.get("/auth/users");
+  async getAllUsers(storeId?: number): Promise<User[]> {
+    const params = storeId ? `?storeId=${storeId}` : "";
+    const response = await api.get(`/auth/users${params}`);
     return response.data;
   },
 
@@ -451,6 +452,18 @@ export const clientService = {
     const response = await api.patch(`/clients/${id}/debt`, {
       amount,
       operation,
+    });
+    return response.data;
+  },
+
+  async addDebtManually(
+    id: number,
+    amount: number,
+    notes?: string
+  ): Promise<Client> {
+    const response = await api.post(`/clients/${id}/add-debt`, {
+      amount,
+      notes,
     });
     return response.data;
   },

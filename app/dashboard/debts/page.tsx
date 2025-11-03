@@ -11,12 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, DollarSign, Eye, TrendingDown, AlertCircle, Calendar, FileText, Download } from "lucide-react"
+import { Search, DollarSign, Eye, TrendingDown, AlertCircle, Calendar, FileText, Download, Plus } from "lucide-react"
 import { PaymentDialog } from "@/components/debts/payment-dialog"
 import { DebtDetailDialog } from "@/components/debts/debt-detail-dialog"
+import { AddDebtDialog } from "@/components/debts/add-debt-dialog"
 
 export default function DebtsPage() {
-  const { user } = useAuthContext()
+  const { user, isAdmin } = useAuthContext()
   const storeId = user?.storeId || user?.store?.id
   const { clientsDebtInfo, totalDebt, loading, error, fetchClientsWithDebt, getDebtsReport } = useDebts()
   const { clients } = useClients(storeId)
@@ -25,6 +26,7 @@ export default function DebtsPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
+  const [isAddDebtDialogOpen, setIsAddDebtDialogOpen] = useState(false)
   const [showDebtsReport, setShowDebtsReport] = useState(false)
 
   // Calcular estadísticas
@@ -76,6 +78,17 @@ export default function DebtsPage() {
 
   const handlePaymentSuccess = () => {
     setIsPaymentDialogOpen(false)
+    setSelectedClient(null)
+    fetchClientsWithDebt()
+  }
+
+  const handleAddDebt = (client: Client) => {
+    setSelectedClient(client)
+    setIsAddDebtDialogOpen(true)
+  }
+
+  const handleAddDebtSuccess = () => {
+    setIsAddDebtDialogOpen(false)
     setSelectedClient(null)
     fetchClientsWithDebt()
   }
@@ -248,6 +261,7 @@ export default function DebtsPage() {
                             size="sm"
                             onClick={() => handleViewDetail(client)}
                             className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
+                            title="Ver detalles"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -257,8 +271,20 @@ export default function DebtsPage() {
                               size="sm"
                               onClick={() => handleAddPayment(client)}
                               className="hover:bg-green-500/10 hover:text-green-600 transition-all hover:scale-110"
+                              title="Registrar pago"
                             >
                               <DollarSign className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAddDebt(client)}
+                              className="hover:bg-amber-500/10 hover:text-amber-600 transition-all hover:scale-110"
+                              title="Agregar deuda manual"
+                            >
+                              <Plus className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
@@ -284,6 +310,13 @@ export default function DebtsPage() {
         client={selectedClient}
         open={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
+      />
+
+      <AddDebtDialog
+        client={selectedClient}
+        open={isAddDebtDialogOpen}
+        onOpenChange={setIsAddDebtDialogOpen}
+        onSuccess={handleAddDebtSuccess}
       />
 
       {/* Reporte de deudas */}

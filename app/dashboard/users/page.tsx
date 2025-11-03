@@ -55,8 +55,15 @@ export default function UsersPage() {
     try {
       setLoading(true)
       setError(null)
-      const data = await authService.getAllUsers()
+      // Filtrar usuarios solo de la tienda del admin actual
+      const storeId = currentUser?.storeId || currentUser?.store?.id
+      const data = await authService.getAllUsers(storeId)
       setUsers(data)
+      console.log("👥 Usuarios cargados:", {
+        total: data.length,
+        storeId: storeId,
+        usuarios: data.map(u => ({ id: u.id, username: u.username, storeId: u.storeId || u.store?.id }))
+      })
     } catch (err: any) {
       setError(err.message || "Error al cargar usuarios")
     } finally {
