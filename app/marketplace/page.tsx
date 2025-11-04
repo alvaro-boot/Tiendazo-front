@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Store, Search, MapPin, Star } from "lucide-react";
+import { Store, Search, MapPin, Star, Package, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,26 @@ interface PublicStore {
   longitude?: number;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  sellPrice: number;
+  image?: string;
+  images?: string[];
+  stock: number;
+  category?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface StoreWithProducts extends PublicStore {
+  products?: Product[];
+  productsCount?: number;
+}
+
 export default function MarketplacePage() {
-  const [stores, setStores] = useState<PublicStore[]>([]);
+  const [stores, setStores] = useState<StoreWithProducts[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -36,7 +54,33 @@ export default function MarketplacePage() {
     try {
       setLoading(true);
       const data = await marketplaceService.getPublicStores();
-      setStores(data);
+      
+      // Cargar productos para cada tienda
+      const storesWithProducts = await Promise.all(
+        data.map(async (store) => {
+          try {
+            const productsResponse = await marketplaceService.getStoreProducts(store.slug, {
+              page: 1,
+              limit: 6, // Mostrar solo los primeros 6 productos
+            });
+            
+            return {
+              ...store,
+              products: productsResponse.products || [],
+              productsCount: productsResponse.pagination?.total || 0,
+            };
+          } catch (error) {
+            console.error(`Error cargando productos para tienda ${store.slug}:`, error);
+            return {
+              ...store,
+              products: [],
+              productsCount: 0,
+            };
+          }
+        })
+      );
+      
+      setStores(storesWithProducts);
     } catch (error) {
       console.error("Error cargando tiendas:", error);
     } finally {
@@ -48,6 +92,19 @@ export default function MarketplacePage() {
     store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     store.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const formatPrice = (price: number): string => {
+    const rounded = Math.round(price * 100) / 100;
+    const parts = rounded.toString().split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1] || '';
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    if (decimalPart && decimalPart !== '00' && decimalPart !== '0') {
+      const formattedDecimal = decimalPart.padEnd(2, '0').substring(0, 2);
+      return `$${formattedInteger},${formattedDecimal}`;
+    }
+    return `$${formattedInteger}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -145,16 +202,94 @@ export default function MarketplacePage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {store.address && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span className="truncate">{store.address}</span>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        {store.address && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span className="truncate">{store.address}</span>
+                          </div>
+                        )}
+                        {store.phone && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>{store.phone}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Productos destacados */}
+                      {store.products && store.products.length > 0 && (
+                        <div className="border-t pt-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Package className="h-4 w-4 text-primary" />
+                              <span>Productos</span>
+                              {store.productsCount && store.productsCount > 0 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {store.productsCount} disponible{store.productsCount !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            {store.products.slice(0, 4).map((product) => (
+                              <div
+                                key={product.id}
+                                className="group relative overflow-hidden rounded-lg border border-border/50 hover:border-primary/50 transition-all cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/marketplace/tienda/${store.slug}`;
+                                }}
+                              >
+                                <div className="relative aspect-square overflow-hidden bg-muted/50">
+                                  {product.image || product.images?.[0] ? (
+                                    <img
+                                      src={product.image || product.images?.[0]}
+                                      alt={product.name}
+                                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-muted">
+                                      <Package className="h-8 w-8 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                  {product.stock === 0 && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                      <Badge variant="destructive" className="text-xs">
+                                        Agotado
+                                      </Badge>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2 space-y-1">
+                                  <h4 className="text-xs font-medium line-clamp-1 group-hover:text-primary transition-colors">
+                                    {product.name}
+                                  </h4>
+                                  <p className="text-xs font-bold text-primary">
+                                    {formatPrice(Number(product.sellPrice))}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {store.productsCount && store.productsCount > 4 && (
+                            <Link
+                              href={`/marketplace/tienda/${store.slug}`}
+                              className="block text-center text-sm text-primary hover:underline font-medium"
+                            >
+                              Ver todos los productos ({store.productsCount})
+                            </Link>
+                          )}
                         </div>
                       )}
-                      {store.phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{store.phone}</span>
+
+                      {(!store.products || store.products.length === 0) && (
+                        <div className="border-t pt-4 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            No hay productos disponibles
+                          </p>
                         </div>
                       )}
                     </div>
