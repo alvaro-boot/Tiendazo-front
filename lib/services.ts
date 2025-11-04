@@ -211,6 +211,190 @@ export const authService = {
   },
 };
 
+// Servicios del marketplace público
+export const marketplaceService = {
+  async getPublicStores(): Promise<Store[]> {
+    const response = await api.get("/public/stores");
+    return response.data;
+  },
+
+  async getStoreBySlug(slug: string): Promise<Store> {
+    const response = await api.get(`/public/stores/${slug}`);
+    return response.data;
+  },
+
+  async getStoreProducts(
+    slug: string,
+    filters?: {
+      category?: string;
+      search?: string;
+      sort?: string;
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<{ products: Product[]; pagination: any }> {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append("category", filters.category);
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.sort) params.append("sort", filters.sort);
+    if (filters?.page) params.append("page", filters.page.toString());
+    if (filters?.limit) params.append("limit", filters.limit.toString());
+
+    const response = await api.get(`/public/stores/${slug}/products?${params.toString()}`);
+    return response.data;
+  },
+
+  async getProduct(id: number): Promise<Product> {
+    const response = await api.get(`/public/products/${id}`);
+    return response.data;
+  },
+
+  async getProductBySlug(slug: string): Promise<Product> {
+    const response = await api.get(`/public/products/${slug}/details`);
+    return response.data;
+  },
+};
+
+// Servicios de pedidos
+export interface Order {
+  id: number;
+  orderNumber: string;
+  storeId: number;
+  clientId?: number;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  subtotal: number;
+  tax: number;
+  shipping: number;
+  total: number;
+  currency: string;
+  shippingAddress?: string;
+  shippingCity?: string;
+  shippingState?: string;
+  shippingZipCode?: string;
+  shippingCountry?: string;
+  shippingPhone?: string;
+  shippingName?: string;
+  paymentGatewayTransactionId?: string;
+  paymentGatewaySessionUrl?: string;
+  items: OrderItem[];
+  createdAt: string;
+}
+
+export interface OrderItem {
+  id: number;
+  productId: number;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+  product?: Product;
+}
+
+export const orderService = {
+  async createOrder(orderData: any): Promise<Order> {
+    const response = await api.post("/orders", orderData);
+    return response.data;
+  },
+
+  async getOrders(filters?: {
+    storeId?: number;
+    clientId?: number;
+    status?: string;
+    paymentStatus?: string;
+  }): Promise<Order[]> {
+    const params = new URLSearchParams();
+    if (filters?.storeId) params.append("storeId", filters.storeId.toString());
+    if (filters?.clientId) params.append("clientId", filters.clientId.toString());
+    if (filters?.status) params.append("status", filters.status);
+    if (filters?.paymentStatus) params.append("paymentStatus", filters.paymentStatus);
+
+    const response = await api.get(`/orders?${params.toString()}`);
+    return response.data;
+  },
+
+  async getOrder(id: number): Promise<Order> {
+    const response = await api.get(`/orders/${id}`);
+    return response.data;
+  },
+
+  async getOrderByNumber(orderNumber: string): Promise<Order> {
+    const response = await api.get(`/orders/number/${orderNumber}`);
+    return response.data;
+  },
+};
+
+// Servicios de contabilidad
+export interface AccountingEntry {
+  id: number;
+  storeId: number;
+  type: "INCOME" | "EXPENSE";
+  category: string;
+  date: string;
+  description: string;
+  amount: number;
+  tax: number;
+  netAmount: number;
+  currency: string;
+}
+
+export const accountingService = {
+  async getEntries(filters?: {
+    storeId: number;
+    startDate?: string;
+    endDate?: string;
+    type?: "INCOME" | "EXPENSE";
+    category?: string;
+  }): Promise<AccountingEntry[]> {
+    const params = new URLSearchParams();
+    if (filters?.storeId) params.append("storeId", filters.storeId.toString());
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.type) params.append("type", filters.type);
+    if (filters?.category) params.append("category", filters.category);
+
+    const response = await api.get(`/accounting/entries?${params.toString()}`);
+    return response.data;
+  },
+
+  async registerExpense(data: {
+    storeId: number;
+    category: string;
+    amount: number;
+    description: string;
+    date: string;
+    notes?: string;
+  }): Promise<AccountingEntry> {
+    const response = await api.post("/accounting/expenses", data);
+    return response.data;
+  },
+
+  async getFinancialSummary(filters: {
+    storeId: number;
+    startDate: string;
+    endDate: string;
+  }): Promise<any> {
+    const params = new URLSearchParams();
+    params.append("storeId", filters.storeId.toString());
+    params.append("startDate", filters.startDate);
+    params.append("endDate", filters.endDate);
+
+    const response = await api.get(`/accounting/summary?${params.toString()}`);
+    return response.data;
+  },
+
+  async generateReport(data: {
+    storeId: number;
+    period: string;
+    startDate: string;
+    endDate: string;
+  }): Promise<any> {
+    const response = await api.post("/accounting/reports", data);
+    return response.data;
+  },
+};
+
 // Servicios de tiendas
 export const storeService = {
   async getStores(): Promise<Store[]> {
