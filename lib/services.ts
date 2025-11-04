@@ -199,6 +199,16 @@ export const authService = {
   async deleteUser(id: number): Promise<void> {
     await api.delete(`/auth/users/${id}`);
   },
+
+  async forgotPassword(email: string): Promise<{ message: string; token?: string; resetUrl?: string }> {
+    const response = await api.post("/auth/forgot-password", { email });
+    return response.data;
+  },
+
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    const response = await api.post("/auth/reset-password", { token, password });
+    return response.data;
+  },
 };
 
 // Servicios de tiendas

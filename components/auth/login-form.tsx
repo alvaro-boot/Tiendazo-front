@@ -88,12 +88,19 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
-          <p className="text-sm text-center text-muted-foreground">
-            ¿No tienes cuenta?{" "}
-            <Link href="/register" className="text-primary hover:underline">
-              Regístrate
-            </Link>
-          </p>
+          <div className="text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              <Link href="/forgot-password" className="text-primary hover:underline font-medium">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              ¿No tienes cuenta?{" "}
+              <Link href="/register" className="text-primary hover:underline">
+                Regístrate
+              </Link>
+            </p>
+          </div>
         </CardFooter>
       </form>
     </Card>
