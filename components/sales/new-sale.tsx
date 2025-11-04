@@ -35,6 +35,31 @@ interface CartItem {
   subtotal: number;
 }
 
+// Función para formatear precios con separadores de miles (formato colombiano)
+const formatPrice = (price: number): string => {
+  // Redondear a 2 decimales si es necesario
+  const rounded = Math.round(price * 100) / 100;
+  
+  // Separar parte entera y decimal
+  const parts = rounded.toString().split('.');
+  const integerPart = parts[0];
+  const decimalPart = parts[1] || '';
+  
+  // Agregar separadores de miles (punto como separador de miles)
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  // Si tiene decimales significativos (no es .00), mostrarlos con coma
+  // Si los decimales son "00" o no existen, no mostrarlos
+  if (decimalPart && decimalPart !== '00' && decimalPart !== '0') {
+    // Asegurar que tenga 2 dígitos
+    const formattedDecimal = decimalPart.padEnd(2, '0').substring(0, 2);
+    return `$${formattedInteger},${formattedDecimal}`;
+  }
+  
+  // Si no tiene decimales o es .00, mostrar solo la parte entera
+  return `$${formattedInteger}`;
+};
+
 export function NewSale() {
   const { user } = useAuthContext();
   const storeId = user?.storeId || user?.store?.id;
@@ -393,7 +418,7 @@ export function NewSale() {
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-3 w-3 text-primary" />
                             <span className="font-semibold text-primary text-base">
-                              ${Number(product.sellPrice || 0).toFixed(2)}
+                              {formatPrice(Number(product.sellPrice || 0))}
                             </span>
                           </div>
                         </div>
@@ -513,7 +538,7 @@ export function NewSale() {
                           <p className="font-semibold text-sm truncate">{item.productName}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-muted-foreground">
-                              ${item.price.toFixed(2)} c/u
+                              {formatPrice(item.price)} c/u
                             </span>
                             {stockAvailable <= 3 && stockAvailable >= 0 && (
                               <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
@@ -547,7 +572,7 @@ export function NewSale() {
                           </div>
                           <div className="text-right min-w-[80px]">
                             <p className="font-bold text-primary text-sm">
-                              ${item.subtotal.toFixed(2)}
+                              {formatPrice(item.subtotal)}
                             </p>
                           </div>
                           <Button
@@ -570,7 +595,7 @@ export function NewSale() {
                   </div>
                   <div className="flex justify-between items-center text-base font-semibold">
                     <span>Subtotal:</span>
-                    <span className="text-primary">${totals.subtotal.toFixed(2)}</span>
+                    <span className="text-primary">{formatPrice(totals.subtotal)}</span>
                   </div>
                 </div>
                 <Button
@@ -742,13 +767,13 @@ export function NewSale() {
                   </div>
                   <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50 border">
                     <span className="text-muted-foreground font-medium">Subtotal</span>
-                    <span className="font-semibold text-lg">${totals.subtotal.toFixed(2)}</span>
+                    <span className="font-semibold text-lg">{formatPrice(totals.subtotal)}</span>
                   </div>
                   <div className="border-t-2 pt-4 space-y-3">
                     <div className="flex justify-between items-center p-4 rounded-xl bg-gradient-to-r from-primary/20 to-primary/10 border-2 border-primary/30">
                       <span className="text-xl font-bold">Total a Pagar</span>
                       <span className="text-3xl font-bold text-primary">
-                        ${totals.total.toFixed(2)}
+                        {formatPrice(totals.total)}
                       </span>
                     </div>
                   </div>
