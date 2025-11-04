@@ -10,8 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Store, BadgeCheck, Menu } from "lucide-react";
+import { User, LogOut, Store, BadgeCheck, Menu, ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 
@@ -53,6 +54,12 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        <Link href="/marketplace" target="_blank">
+          <Button variant="ghost" size="sm" className="gap-2 rounded-xl hover:bg-accent/50 transition-all duration-200">
+            <ShoppingBag className="h-4 w-4" />
+            <span className="hidden sm:inline">Marketplace</span>
+          </Button>
+        </Link>
         <ThemeToggle />
         <div className="hidden lg:flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-muted/80 to-muted/50 border border-border/50 shadow-soft">
           <BadgeCheck className="h-4 w-4 text-primary" />

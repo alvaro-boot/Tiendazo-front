@@ -13,6 +13,7 @@ import {
   Store,
   BarChart3,
   UserPlus,
+  ShoppingBag,
 } from "lucide-react";
 import { useAuthContext } from "@/lib/auth-context";
 
@@ -133,6 +134,30 @@ export function Sidebar() {
             </Link>
           </>
         )}
+        
+        {/* Enlace al Marketplace */}
+        <div className="my-4 h-px bg-border/50" />
+        <Link
+          href="/marketplace"
+          target="_blank"
+          className={cn(
+            "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+            pathname === "/marketplace"
+              ? "bg-gradient-to-r from-primary via-primary to-primary/95 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02] border border-primary/20"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1 hover:shadow-soft border border-transparent hover:border-border/50"
+          )}
+        >
+          <ShoppingBag className={cn(
+            "h-5 w-5 transition-transform duration-200",
+            pathname === "/marketplace" ? "scale-110" : "group-hover:scale-110"
+          )} />
+          <span className={cn(
+            "transition-all duration-200",
+            pathname === "/marketplace" && "font-semibold"
+          )}>
+            Marketplace
+          </span>
+        </Link>
       </nav>
     </div>
   );
