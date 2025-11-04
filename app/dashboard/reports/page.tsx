@@ -126,20 +126,60 @@ export default function ReportsPage() {
         console.log("📊 Reporte recibido del backend:", report)
         
         const validSales = Array.isArray(report.sales) ? report.sales : []
-        setFilteredSales(validSales)
         
-        // Usar datos del reporte del backend
+        // Filtrar ventas por tienda para asegurar que solo se muestren datos de la tienda del usuario
+        const filteredSalesByStore = currentStoreId 
+          ? validSales.filter((sale: any) => sale.storeId === currentStoreId)
+          : validSales
+        
+        setFilteredSales(filteredSalesByStore)
+        
+        // Recalcular métricas basadas solo en ventas filtradas por tienda
+        const totalRevenue = filteredSalesByStore.reduce((sum: number, sale: any) => sum + Number(sale.total || 0), 0)
+        const totalProfit = filteredSalesByStore.reduce((sum: number, sale: any) => sum + Number(sale.profit || 0), 0)
+        const totalCount = filteredSalesByStore.length
+        const creditSales = filteredSalesByStore.filter((s: any) => s.isCredit).length
+        const cashSales = totalCount - creditSales
+        const averageTicket = totalCount > 0 ? totalRevenue / totalCount : 0
+        
+        // Filtrar topProducts, topCreditProducts y topClientsDebt por tienda
+        const filteredTopProducts = (report.topProducts || []).filter((product: any) => {
+          // Verificar si el producto pertenece a la tienda del usuario
+          return filteredSalesByStore.some((sale: any) => 
+            sale.details?.some((detail: any) => 
+              detail.product?.id === product.id || detail.product?.name === product.name
+            )
+          )
+        })
+        
+        const filteredTopCreditProducts = (report.topCreditProducts || []).filter((product: any) => {
+          // Verificar si el producto pertenece a la tienda del usuario
+          return filteredSalesByStore.some((sale: any) => 
+            sale.isCredit && sale.details?.some((detail: any) => 
+              detail.product?.id === product.id || detail.product?.name === product.name
+            )
+          )
+        })
+        
+        const filteredTopClientsDebt = (report.topClientsDebt || []).filter((client: any) => {
+          // Verificar si el cliente pertenece a la tienda del usuario
+          return filteredSalesByStore.some((sale: any) => 
+            sale.isCredit && sale.client?.id === client.id
+          )
+        })
+        
+        // Usar datos del reporte del backend, pero recalcular métricas con ventas filtradas
         setReportData({
-          totalRevenue: report.summary?.totalSales || 0,
-          totalProfit: report.summary?.totalProfit || 0,
-          totalCount: report.summary?.totalCount || 0,
-          creditSales: report.summary?.creditSales || 0,
-          cashSales: report.summary?.cashSales || 0,
-          averageTicket: report.summary?.averageSale || 0,
-          topProducts: report.topProducts || [],
-          topCreditProducts: report.topCreditProducts || [],
-          topClientsDebt: report.topClientsDebt || [],
-          sales: validSales,
+          totalRevenue,
+          totalProfit,
+          totalCount,
+          creditSales,
+          cashSales,
+          averageTicket,
+          topProducts: filteredTopProducts,
+          topCreditProducts: filteredTopCreditProducts,
+          topClientsDebt: filteredTopClientsDebt,
+          sales: filteredSalesByStore,
         })
 
         console.log("📊 Reporte generado:", {
@@ -159,13 +199,19 @@ export default function ReportsPage() {
         // Si falla el reporte, intentar obtener solo las ventas
         const salesData = await saleService.getSales(filters)
         const validSales = Array.isArray(salesData) ? salesData : []
-        setFilteredSales(validSales)
+        
+        // Filtrar ventas por tienda para asegurar que solo se muestren datos de la tienda del usuario
+        const filteredSalesByStore = currentStoreId 
+          ? validSales.filter((sale: any) => sale.storeId === currentStoreId)
+          : validSales
+        
+        setFilteredSales(filteredSalesByStore)
         
         // Calcular datos básicos del reporte
-        const totalRevenue = validSales.reduce((sum: number, sale: any) => sum + Number(sale.total || 0), 0)
-        const totalProfit = validSales.reduce((sum: number, sale: any) => sum + Number(sale.profit || 0), 0)
-        const totalCount = validSales.length
-        const creditSales = validSales.filter((s: any) => s.isCredit).length
+        const totalRevenue = filteredSalesByStore.reduce((sum: number, sale: any) => sum + Number(sale.total || 0), 0)
+        const totalProfit = filteredSalesByStore.reduce((sum: number, sale: any) => sum + Number(sale.profit || 0), 0)
+        const totalCount = filteredSalesByStore.length
+        const creditSales = filteredSalesByStore.filter((s: any) => s.isCredit).length
         const cashSales = totalCount - creditSales
         const averageTicket = totalCount > 0 ? totalRevenue / totalCount : 0
 
@@ -179,7 +225,7 @@ export default function ReportsPage() {
           topProducts: [],
           topCreditProducts: [],
           topClientsDebt: [],
-          sales: validSales,
+          sales: filteredSalesByStore,
         })
       }
     } catch (error: any) {
@@ -192,10 +238,12 @@ export default function ReportsPage() {
   const loadDebtsReport = async () => {
     try {
       console.log("💰 Cargando reporte de deudas...")
-      const filters: any = {}
+      const currentStoreId = storeId || user?.storeId || user?.store?.id
+      const filters: any = { storeId: currentStoreId }
       if (startDate) filters.startDate = startDate
       if (endDate) filters.endDate = endDate
 
+      console.log("📤 Filtrando deudas con:", { filters, currentStoreId, userStoreId: user?.storeId, userStore: user?.store })
       const report = await debtService.getDebtsReport(filters)
       console.log("✅ Reporte de deudas obtenido:", report)
       setDebtsReportData(report)
@@ -209,68 +257,98 @@ export default function ReportsPage() {
   const salesByDay = useMemo(() => {
     if (!reportData?.sales) return []
     
+    const currentStoreId = storeId || user?.storeId || user?.store?.id
+    
     const dayMap = new Map<string, { date: string; revenue: number; profit: number; count: number }>()
     
-    reportData.sales.forEach((sale: any) => {
-      const date = new Date(sale.createdAt).toLocaleDateString("es-ES", { 
-        year: "numeric", 
-        month: "short", 
-        day: "numeric" 
+    reportData.sales
+      .filter((sale: any) => {
+        // Filtrar por tienda para asegurar que solo se muestren datos de la tienda del usuario
+        if (currentStoreId) {
+          return sale.storeId === currentStoreId
+        }
+        return true
       })
-      
-      const existing = dayMap.get(date) || { date, revenue: 0, profit: 0, count: 0 }
-      existing.revenue += Number(sale.total || 0)
-      existing.profit += Number(sale.profit || 0)
-      existing.count += 1
-      
-      dayMap.set(date, existing)
-    })
+      .forEach((sale: any) => {
+        const date = new Date(sale.createdAt).toLocaleDateString("es-ES", { 
+          year: "numeric", 
+          month: "short", 
+          day: "numeric" 
+        })
+        
+        const existing = dayMap.get(date) || { date, revenue: 0, profit: 0, count: 0 }
+        existing.revenue += Number(sale.total || 0)
+        existing.profit += Number(sale.profit || 0)
+        existing.count += 1
+        
+        dayMap.set(date, existing)
+      })
     
     return Array.from(dayMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
-  }, [reportData])
+  }, [reportData, storeId, user?.storeId, user?.store?.id])
 
   // Top productos vendidos
   const topProducts = useMemo(() => {
     if (!reportData?.sales) return []
     
+    const currentStoreId = storeId || user?.storeId || user?.store?.id
+    
     const productMap = new Map<string, { name: string; quantity: number; revenue: number; profit: number }>()
     
-    reportData.sales.forEach((sale: any) => {
-      if (sale.details) {
-        sale.details.forEach((detail: any) => {
-          const productName = detail.product?.name || `Producto ${detail.productId}`
-          const existing = productMap.get(productName) || { name: productName, quantity: 0, revenue: 0, profit: 0 }
-          
-          existing.quantity += detail.quantity || 0
-          existing.revenue += Number(detail.subtotal || 0)
-          // Calcular ganancia: (precio venta - precio compra) * cantidad
-          const unitProfit = (detail.unitPrice || 0) - (detail.product?.purchasePrice || 0)
-          existing.profit += unitProfit * (detail.quantity || 0)
-          
-          productMap.set(productName, existing)
-        })
-      }
-    })
+    reportData.sales
+      .filter((sale: any) => {
+        // Filtrar por tienda para asegurar que solo se muestren datos de la tienda del usuario
+        if (currentStoreId) {
+          return sale.storeId === currentStoreId
+        }
+        return true
+      })
+      .forEach((sale: any) => {
+        if (sale.details) {
+          sale.details.forEach((detail: any) => {
+            const productName = detail.product?.name || `Producto ${detail.productId}`
+            const existing = productMap.get(productName) || { name: productName, quantity: 0, revenue: 0, profit: 0 }
+            
+            existing.quantity += detail.quantity || 0
+            existing.revenue += Number(detail.subtotal || 0)
+            // Calcular ganancia: (precio venta - precio compra) * cantidad
+            const unitProfit = (detail.unitPrice || 0) - (detail.product?.purchasePrice || 0)
+            existing.profit += unitProfit * (detail.quantity || 0)
+            
+            productMap.set(productName, existing)
+          })
+        }
+      })
     
     return Array.from(productMap.values())
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10)
-  }, [reportData])
+  }, [reportData, storeId, user?.storeId, user?.store?.id])
 
   // Métodos de pago
   const paymentMethods = useMemo(() => {
     if (!reportData?.sales) return []
     
+    const currentStoreId = storeId || user?.storeId || user?.store?.id
+    
     const methods = new Map<string, number>()
-    reportData.sales.forEach((sale: any) => {
-      const method = sale.isCredit ? "Crédito" : "Contado"
-      methods.set(method, (methods.get(method) || 0) + 1)
-    })
+    reportData.sales
+      .filter((sale: any) => {
+        // Filtrar por tienda para asegurar que solo se muestren datos de la tienda del usuario
+        if (currentStoreId) {
+          return sale.storeId === currentStoreId
+        }
+        return true
+      })
+      .forEach((sale: any) => {
+        const method = sale.isCredit ? "Crédito" : "Contado"
+        methods.set(method, (methods.get(method) || 0) + 1)
+      })
     
     return Array.from(methods.entries()).map(([name, value]) => ({ name, value }))
-  }, [reportData])
+  }, [reportData, storeId, user?.storeId, user?.store?.id])
 
   const COLORS = [
     "hsl(var(--primary))",
