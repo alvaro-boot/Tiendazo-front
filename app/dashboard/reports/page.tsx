@@ -5,6 +5,34 @@ import { useSales } from "@/hooks/use-api"
 import { useDebts } from "@/hooks/use-debts"
 import { useAuthContext } from "@/lib/auth-context"
 import { saleService, debtService } from "@/lib/services"
+
+// Función para formatear precios con separadores de miles (formato colombiano)
+const formatPrice = (price: number): string => {
+  if (!price || isNaN(price)) return "$0"
+  
+  // Redondear a 2 decimales si es necesario
+  const rounded = Math.round(price * 100) / 100
+  
+  // Separar parte entera y decimal
+  const parts = rounded.toString().split('.')
+  const integerPart = parts[0]
+  const decimalPart = parts[1] || ''
+  
+  // Agregar separadores de miles (punto como separador de miles)
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  
+  // Si tiene decimales significativos (no es .00), mostrarlos con coma
+  // Si los decimales son "00" o no existen, no mostrarlos
+  if (decimalPart && decimalPart !== '00' && decimalPart !== '0') {
+    // Asegurar que tenga 2 dígitos
+    const formattedDecimal = decimalPart.padEnd(2, '0').substring(0, 2)
+    return `$${formattedInteger},${formattedDecimal}`
+  }
+  
+  // Si no tiene decimales o es .00, mostrar solo la parte entera
+  return `$${formattedInteger}`
+}
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -424,7 +452,9 @@ export default function ReportsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-600">${reportData.totalRevenue.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {formatPrice(Number(reportData.totalRevenue || 0))}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Ingresos acumulados</p>
                 </CardContent>
               </Card>
@@ -438,7 +468,9 @@ export default function ReportsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-600">${reportData.totalProfit.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {formatPrice(Number(reportData.totalProfit || 0))}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Ganancia neta</p>
                 </CardContent>
               </Card>
@@ -452,7 +484,9 @@ export default function ReportsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">${reportData.averageTicket.toFixed(2)}</p>
+                  <p className="text-3xl font-bold">
+                    {formatPrice(Number(reportData.averageTicket || 0))}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">Por transacción</p>
                 </CardContent>
               </Card>
@@ -548,10 +582,10 @@ export default function ReportsPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-right font-semibold">
-                            ${Number(sale.total || 0).toFixed(2)}
+                            {formatPrice(Number(sale.total || 0))}
                           </TableCell>
                           <TableCell className="text-right font-semibold text-green-600">
-                            ${Number(sale.profit || 0).toFixed(2)}
+                            {formatPrice(Number(sale.profit || 0))}
                           </TableCell>
                         </TableRow>
                       ))
@@ -611,7 +645,7 @@ export default function ReportsPage() {
                               <TableCell className="font-medium">{product.name}</TableCell>
                               <TableCell className="text-right font-semibold">{product.quantity}</TableCell>
                               <TableCell className="text-right font-semibold text-green-600">
-                                ${Number(product.revenue || 0).toFixed(2)}
+                                {formatPrice(Number(product.revenue || 0))}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -675,7 +709,7 @@ export default function ReportsPage() {
                               <TableCell className="font-medium">{product.name}</TableCell>
                               <TableCell className="text-right font-semibold">{product.quantity}</TableCell>
                               <TableCell className="text-right font-semibold text-red-600">
-                                ${Number(product.revenue || 0).toFixed(2)}
+                                {formatPrice(Number(product.revenue || 0))}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -737,7 +771,7 @@ export default function ReportsPage() {
                               <TableCell className="font-bold text-red-600">{index + 1}</TableCell>
                               <TableCell className="font-medium">{client.name}</TableCell>
                               <TableCell className="text-right font-semibold text-red-600">
-                                ${Number(client.totalDebt || 0).toFixed(2)}
+                                {formatPrice(Number(client.totalDebt || 0))}
                               </TableCell>
                               <TableCell className="text-right">
                                 <Badge variant="outline">{client.saleCount}</Badge>
@@ -783,7 +817,7 @@ export default function ReportsPage() {
                         </CardHeader>
                         <CardContent>
                           <p className="text-2xl font-bold text-green-600">
-                            ${debtsReportData.summary?.totalPayments?.toFixed(2) || "0.00"}
+                            {formatPrice(Number(debtsReportData.summary?.totalPayments || 0))}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">En el período</p>
                         </CardContent>
@@ -809,7 +843,7 @@ export default function ReportsPage() {
                         </CardHeader>
                         <CardContent>
                           <p className="text-2xl font-bold">
-                            ${debtsReportData.summary?.averagePayment?.toFixed(2) || "0.00"}
+                            {formatPrice(Number(debtsReportData.summary?.averagePayment || 0))}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">Por transacción</p>
                         </CardContent>
@@ -841,7 +875,7 @@ export default function ReportsPage() {
                                   </TableCell>
                                   <TableCell className="text-right">{data.count}</TableCell>
                                   <TableCell className="text-right font-semibold">
-                                    ${data.total.toFixed(2)}
+                                    {formatPrice(Number(data.total || 0))}
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -884,13 +918,13 @@ export default function ReportsPage() {
                                      payment.paymentType === "TRANSFER" ? "Transferencia" : payment.paymentType}
                                   </TableCell>
                                   <TableCell className="text-right font-semibold text-green-600">
-                                    ${Number(payment.amount || 0).toFixed(2)}
+                                    {formatPrice(Number(payment.amount || 0))}
                                   </TableCell>
                                   <TableCell className="text-right text-muted-foreground">
-                                    ${Number(payment.previousDebt || 0).toFixed(2)}
+                                    {formatPrice(Number(payment.previousDebt || 0))}
                                   </TableCell>
                                   <TableCell className="text-right font-semibold text-red-600">
-                                    ${Number(payment.newDebt || 0).toFixed(2)}
+                                    {formatPrice(Number(payment.newDebt || 0))}
                                   </TableCell>
                                 </TableRow>
                               ))}
