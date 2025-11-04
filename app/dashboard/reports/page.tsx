@@ -621,7 +621,12 @@ export default function ReportsPage() {
                             fontSize={12}
                           />
                           <YAxis />
-                          <Tooltip />
+                          <Tooltip formatter={(value: any, name: string) => {
+                            if (name === "Ingresos ($)") {
+                              return formatPrice(Number(value || 0))
+                            }
+                            return value
+                          }} />
                           <Legend />
                           <Bar dataKey="quantity" fill="#8884d8" name="Cantidad Vendida" />
                           <Bar dataKey="revenue" fill="#82ca9d" name="Ingresos ($)" />
@@ -685,7 +690,12 @@ export default function ReportsPage() {
                             fontSize={12}
                           />
                           <YAxis />
-                          <Tooltip />
+                          <Tooltip formatter={(value: any, name: string) => {
+                            if (name === "Monto Fiado ($)") {
+                              return formatPrice(Number(value || 0))
+                            }
+                            return value
+                          }} />
                           <Legend />
                           <Bar dataKey="quantity" fill="#ffc658" name="Cantidad Fiada" />
                           <Bar dataKey="revenue" fill="#ff7c7c" name="Monto Fiado ($)" />
@@ -749,7 +759,7 @@ export default function ReportsPage() {
                             fontSize={12}
                           />
                           <YAxis />
-                          <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+                          <Tooltip formatter={(value: any) => formatPrice(Number(value || 0))} />
                           <Legend />
                           <Bar dataKey="totalDebt" fill="#ff7c7c" name="Deuda Total ($)" />
                         </BarChart>
@@ -957,6 +967,7 @@ export default function ReportsPage() {
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "6px",
                         }}
+                        formatter={(value: any) => formatPrice(Number(value || 0))}
                       />
                       <Legend />
                       <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} name="Ingresos" />
@@ -1010,6 +1021,7 @@ export default function ReportsPage() {
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "6px",
                         }}
+                        formatter={(value: any) => formatPrice(Number(value || 0))}
                       />
                       <Legend />
                       <Bar dataKey="revenue" fill="hsl(var(--primary))" name="Ingresos" />
@@ -1042,6 +1054,7 @@ export default function ReportsPage() {
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "6px",
                           }}
+                          formatter={(value: any) => formatPrice(Number(value || 0))}
                         />
                         <Legend />
                         <Bar dataKey="revenue" fill="hsl(var(--primary))" name="Ingresos" />

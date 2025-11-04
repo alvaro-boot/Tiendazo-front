@@ -535,43 +535,45 @@ export function NewSale() {
                         className="group flex items-center gap-3 rounded-lg border-2 p-3 bg-card hover:bg-muted/50 transition-all"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate">{item.productName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">
-                              {formatPrice(item.price)} c/u
-                            </span>
+                          <p className="font-semibold text-sm mb-1.5">{item.productName}</p>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {formatPrice(item.price)} c/u
+                              </span>
+                            </div>
                             {stockAvailable <= 3 && stockAvailable >= 0 && (
-                              <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
+                              <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 w-fit">
                                 Stock: {stockAvailable}
                               </Badge>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1">
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1.5">
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive p-0"
+                              className="h-7 w-7 rounded-full hover:bg-destructive/10 hover:text-destructive p-0"
                             >
-                              <Minus className="h-3 w-3" />
+                              <Minus className="h-3.5 w-3.5" />
                             </Button>
-                            <span className="w-8 text-center font-semibold text-sm">
+                            <span className="w-10 text-center font-semibold text-sm">
                               {item.quantity}
                             </span>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary p-0"
+                              className="h-7 w-7 rounded-full hover:bg-primary/10 hover:text-primary p-0"
                               disabled={stockAvailable <= 0}
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-3.5 w-3.5" />
                             </Button>
                           </div>
-                          <div className="text-right min-w-[80px]">
-                            <p className="font-bold text-primary text-sm">
+                          <div className="text-right min-w-[90px]">
+                            <p className="font-bold text-primary text-base">
                               {formatPrice(item.subtotal)}
                             </p>
                           </div>
@@ -579,7 +581,7 @@ export function NewSale() {
                             size="sm"
                             variant="ghost"
                             onClick={() => removeFromCart(item.productId)}
-                            className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-all p-0"
+                            className="h-9 w-9 rounded-full hover:bg-destructive/10 hover:text-destructive transition-all p-0 ml-1"
                           >
                             <X className="h-4 w-4" />
                           </Button>
