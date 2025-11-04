@@ -35,14 +35,14 @@ export function Sidebar() {
   const { isAdmin } = useAuthContext();
 
   return (
-    <div className="flex h-full w-64 flex-col border-r bg-gradient-to-b from-card to-card/95 backdrop-blur-sm">
-      <div className="flex h-16 items-center gap-3 border-b px-6 bg-gradient-to-r from-primary/5 to-transparent">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
+    <div className="flex h-full w-64 flex-col border-r border-border/50 bg-gradient-to-b from-card via-card/98 to-card/95 backdrop-blur-sm shadow-soft">
+      <div className="flex h-16 items-center gap-3 border-b border-border/50 px-6 bg-gradient-to-r from-primary/8 via-primary/5 to-transparent">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-200 hover:scale-105">
           <Store className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
-          <span className="text-base font-bold tracking-tight">Tiendazo</span>
-          <span className="text-xs text-muted-foreground">Panel</span>
+          <span className="text-base font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Tiendazo</span>
+          <span className="text-xs text-muted-foreground font-medium">Panel</span>
         </div>
       </div>
 
@@ -56,8 +56,8 @@ export function Sidebar() {
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1 hover:shadow-md"
+                  ? "bg-gradient-to-r from-primary via-primary to-primary/95 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02] border border-primary/20"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1 hover:shadow-soft border border-transparent hover:border-border/50"
               )}
             >
               <item.icon className={cn(
@@ -116,8 +116,8 @@ export function Sidebar() {
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                 pathname === "/register-employee"
-                  ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1 hover:shadow-md"
+                  ? "bg-gradient-to-r from-primary via-primary to-primary/95 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02] border border-primary/20"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1 hover:shadow-soft border border-transparent hover:border-border/50"
               )}
             >
               <UserPlus className={cn(
