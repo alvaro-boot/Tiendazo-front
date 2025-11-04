@@ -52,7 +52,7 @@ export function NewSale() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState<"cart" | "details" | "summary">("cart");
+  const [checkoutStep, setCheckoutStep] = useState<"details" | "summary">("details");
 
   // Cargar productos solo para lectura, filtrados por tienda
   useEffect(() => {
@@ -220,7 +220,7 @@ export function NewSale() {
       setInvoiceNumber("");
       setNotes("");
       setIsCheckoutModalOpen(false);
-      setCheckoutStep("cart");
+      setCheckoutStep("details");
       alert("Venta registrada exitosamente");
     } catch (error) {
       console.error("Error al crear la venta:", error);
@@ -231,37 +231,31 @@ export function NewSale() {
   const handleOpenCheckout = () => {
     if (cart.length > 0) {
       setIsCheckoutModalOpen(true);
-      setCheckoutStep("cart");
+      setCheckoutStep("details");
     }
   };
 
   // Resetear paso cuando se cierra el modal
   useEffect(() => {
     if (!isCheckoutModalOpen) {
-      setCheckoutStep("cart");
+      setCheckoutStep("details");
     }
   }, [isCheckoutModalOpen]);
 
   const handleNextStep = () => {
-    if (checkoutStep === "cart") {
-      setCheckoutStep("details");
-    } else if (checkoutStep === "details") {
+    if (checkoutStep === "details") {
       setCheckoutStep("summary");
     }
   };
 
   const handlePreviousStep = () => {
-    if (checkoutStep === "details") {
-      setCheckoutStep("cart");
-    } else if (checkoutStep === "summary") {
+    if (checkoutStep === "summary") {
       setCheckoutStep("details");
     }
   };
 
   const canProceedToNextStep = () => {
-    if (checkoutStep === "cart") {
-      return cart.length > 0;
-    } else if (checkoutStep === "details") {
+    if (checkoutStep === "details") {
       return paymentMethod !== "credit" || selectedClient !== "general";
     }
     return true;
@@ -279,19 +273,10 @@ export function NewSale() {
             Registra una nueva venta de forma rápida e intuitiva
           </p>
         </div>
-        {cart.length > 0 && (
-          <Button
-            onClick={handleOpenCheckout}
-            className="bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
-          >
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            <span className="font-semibold">{cart.length} {cart.length === 1 ? "producto" : "productos"} en carrito</span>
-          </Button>
-        )}
       </div>
 
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6 order-2 lg:order-1">
           <Card className="border-2 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl flex items-center gap-2">
@@ -487,22 +472,127 @@ export function NewSale() {
         </Card>
       </div>
 
-      {/* Modal de Checkout con Pasos */}
+      {/* Carrito de Compra - Visible al lado */}
+      <div className="lg:col-span-1 space-y-4 sm:space-y-6 order-1 lg:order-2">
+        <Card className="border-2 shadow-lg sticky top-4">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-primary" />
+              Carrito de Compra
+              {cart.length > 0 && (
+                <Badge variant="default" className="ml-2">
+                  {cart.length}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="rounded-full bg-muted/50 p-4 mb-4">
+                  <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <p className="font-medium text-muted-foreground">El carrito está vacío</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Busca y agrega productos para comenzar
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="max-h-[400px] overflow-y-auto space-y-2">
+                  {cart.map((item) => {
+                    const product = products.find(p => p.id === item.productId);
+                    const stockAvailable = product ? product.stock - item.quantity : 0;
+                    
+                    return (
+                      <div
+                        key={item.productId}
+                        className="group flex items-center gap-3 rounded-lg border-2 p-3 bg-card hover:bg-muted/50 transition-all"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{item.productName}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">
+                              ${item.price.toFixed(2)} c/u
+                            </span>
+                            {stockAvailable <= 3 && stockAvailable >= 0 && (
+                              <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
+                                Stock: {stockAvailable}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                              className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive p-0"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-8 text-center font-semibold text-sm">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                              className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary p-0"
+                              disabled={stockAvailable <= 0}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <div className="text-right min-w-[80px]">
+                            <p className="font-bold text-primary text-sm">
+                              ${item.subtotal.toFixed(2)}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeFromCart(item.productId)}
+                            className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-all p-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="border-t pt-3 space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Total Items:</span>
+                    <span className="font-semibold">{cart.reduce((sum, item) => sum + item.quantity, 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-base font-semibold">
+                    <span>Subtotal:</span>
+                    <span className="text-primary">${totals.subtotal.toFixed(2)}</span>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleOpenCheckout}
+                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  disabled={cart.length === 0}
+                >
+                  <ChevronRight className="mr-2 h-5 w-5" />
+                  Continuar con la Venta
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      </div>
+
+      {/* Modal de Checkout con Pasos - Solo Detalles y Resumen */}
       <Dialog open={isCheckoutModalOpen} onOpenChange={setIsCheckoutModalOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-              {checkoutStep === "cart" && (
-                <>
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                  Carrito de Compra
-                  {cart.length > 0 && (
-                    <Badge variant="default" className="ml-2">
-                      {cart.length}
-                    </Badge>
-                  )}
-                </>
-              )}
               {checkoutStep === "details" && (
                 <>
                   <User className="h-5 w-5 text-primary" />
@@ -517,31 +607,12 @@ export function NewSale() {
               )}
             </DialogTitle>
             <DialogDescription>
-              Paso {checkoutStep === "cart" ? "1" : checkoutStep === "details" ? "2" : "3"} de 3
+              Paso {checkoutStep === "details" ? "1" : "2"} de 2
             </DialogDescription>
           </DialogHeader>
 
           {/* Indicador de pasos */}
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="flex items-center gap-2">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${
-                checkoutStep === "cart" ? "bg-primary text-primary-foreground border-primary" : 
-                checkoutStep === "details" || checkoutStep === "summary" ? "bg-primary/10 text-primary border-primary" : 
-                "bg-muted text-muted-foreground border-muted-foreground"
-              }`}>
-                {checkoutStep === "details" || checkoutStep === "summary" ? (
-                  <CheckCircle2 className="h-4 w-4" />
-                ) : (
-                  <span className="text-sm font-semibold">1</span>
-                )}
-              </div>
-              <span className={`text-sm font-medium hidden sm:block ${
-                checkoutStep === "cart" ? "text-primary" : "text-muted-foreground"
-              }`}>Carrito</span>
-            </div>
-            <div className={`h-0.5 w-8 sm:w-12 transition-all ${
-              checkoutStep === "details" || checkoutStep === "summary" ? "bg-primary" : "bg-muted"
-            }`} />
             <div className="flex items-center gap-2">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${
                 checkoutStep === "details" ? "bg-primary text-primary-foreground border-primary" : 
@@ -551,7 +622,7 @@ export function NewSale() {
                 {checkoutStep === "summary" ? (
                   <CheckCircle2 className="h-4 w-4" />
                 ) : (
-                  <span className="text-sm font-semibold">2</span>
+                  <span className="text-sm font-semibold">1</span>
                 )}
               </div>
               <span className={`text-sm font-medium hidden sm:block ${
@@ -566,7 +637,7 @@ export function NewSale() {
                 checkoutStep === "summary" ? "bg-primary text-primary-foreground border-primary" : 
                 "bg-muted text-muted-foreground border-muted-foreground"
               }`}>
-                <span className="text-sm font-semibold">3</span>
+                <span className="text-sm font-semibold">2</span>
               </div>
               <span className={`text-sm font-medium hidden sm:block ${
                 checkoutStep === "summary" ? "text-primary" : "text-muted-foreground"
@@ -575,101 +646,7 @@ export function NewSale() {
           </div>
 
           <div className="space-y-4 mt-4">
-            {/* Paso 1: Carrito */}
-            {checkoutStep === "cart" && (
-              <div className="space-y-4">
-                {cart.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="rounded-full bg-muted/50 p-4 mb-4">
-                      <ShoppingCart className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                    <p className="font-medium text-muted-foreground">El carrito está vacío</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Busca y agrega productos para comenzar
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="max-h-[400px] overflow-y-auto space-y-2">
-                      {cart.map((item) => {
-                        const product = products.find(p => p.id === item.productId);
-                        const stockAvailable = product ? product.stock - item.quantity : 0;
-                        
-                        return (
-                          <div
-                            key={item.productId}
-                            className="group flex items-center gap-3 rounded-lg border-2 p-3 bg-card hover:bg-muted/50 transition-all"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm truncate">{item.productName}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-muted-foreground">
-                                  ${item.price.toFixed(2)} c/u
-                                </span>
-                                {stockAvailable <= 3 && stockAvailable >= 0 && (
-                                  <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
-                                    Stock: {stockAvailable}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                                  className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive p-0"
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-8 text-center font-semibold text-sm">
-                                  {item.quantity}
-                                </span>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                                  className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary p-0"
-                                  disabled={stockAvailable <= 0}
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <div className="text-right min-w-[80px]">
-                                <p className="font-bold text-primary text-sm">
-                                  ${item.subtotal.toFixed(2)}
-                                </p>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => removeFromCart(item.productId)}
-                                className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-all p-0"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="border-t pt-3 space-y-2">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">Total Items:</span>
-                        <span className="font-semibold">{cart.reduce((sum, item) => sum + item.quantity, 0)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-base font-semibold">
-                        <span>Subtotal:</span>
-                        <span className="text-primary">${totals.subtotal.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Paso 2: Detalles */}
+            {/* Paso 1: Detalles */}
             {checkoutStep === "details" && (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -752,7 +729,7 @@ export function NewSale() {
               </div>
             )}
 
-            {/* Paso 3: Resumen */}
+            {/* Paso 2: Resumen */}
             {checkoutStep === "summary" && (
               <div className="space-y-4">
                 <div className="space-y-3">
@@ -784,11 +761,11 @@ export function NewSale() {
           <div className="flex justify-between items-center gap-4 mt-6 pt-4 border-t">
             <Button
               variant="outline"
-              onClick={checkoutStep === "cart" ? () => setIsCheckoutModalOpen(false) : handlePreviousStep}
+              onClick={checkoutStep === "details" ? () => setIsCheckoutModalOpen(false) : handlePreviousStep}
               className="flex items-center gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
-              {checkoutStep === "cart" ? "Cerrar" : "Atrás"}
+              {checkoutStep === "details" ? "Cerrar" : "Atrás"}
             </Button>
 
             {checkoutStep === "summary" ? (
