@@ -51,11 +51,16 @@ export interface Store {
 
 export interface StoreData {
   name: string;
-  description: string;
+  description?: string;
   address: string;
-  phone: string;
-  email: string;
+  phone?: string;
+  email?: string;
   currency?: string; // Moneda de la tienda
+  type?: "INTERNAL" | "PUBLIC"; // Tipo de tienda
+  isPublic?: boolean; // Si está visible públicamente
+  slug?: string; // URL amigable para la tienda
+  logo?: string; // URL del logo
+  banner?: string; // URL del banner
 }
 
 export interface Product {
