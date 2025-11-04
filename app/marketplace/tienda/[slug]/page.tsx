@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { marketplaceService } from "@/lib/services";
+import { useCart } from "@/hooks/use-cart";
 
 interface StoreInfo {
   id: number;
@@ -47,7 +48,7 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [cart, setCart] = useState<Map<number, number>>(new Map());
+  const { addItem, getCartItemsCount } = useCart();
 
   useEffect(() => {
     if (slug) {
@@ -68,36 +69,67 @@ export default function StorePage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      console.log("🔍 Cargando productos para tienda:", slug);
+      console.log("🔍 Filtros:", { searchTerm, sortBy });
+      
       const response = await marketplaceService.getStoreProducts(slug, {
         search: searchTerm || undefined,
         sort: sortBy,
         page: 1,
         limit: 50,
       });
-      setProducts(response.products || response);
+      
+      console.log("✅ Respuesta del backend:", response);
+      
+      // El backend devuelve { products: Product[], pagination: {...} }
+      const products = Array.isArray(response) ? response : (response?.products || []);
+      
+      console.log("📦 Productos extraídos:", products);
+      console.log("📦 Cantidad de productos:", products.length);
+      
+      setProducts(products);
     } catch (error) {
-      console.error("Error cargando productos:", error);
+      console.error("❌ Error cargando productos:", error);
+      console.error("❌ Detalles del error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (slug) {
+      loadProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug) return;
+    
     const timer = setTimeout(() => {
-      if (slug) {
-        loadProducts();
-      }
+      loadProducts();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchTerm, sortBy, slug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, sortBy]);
 
-  const addToCart = (productId: number) => {
-    setCart((prev) => {
-      const newCart = new Map(prev);
-      const currentQty = newCart.get(productId) || 0;
-      newCart.set(productId, currentQty + 1);
-      return newCart;
-    });
+  const addToCart = (product: Product) => {
+    if (store) {
+      addItem(
+        store.slug,
+        product.id,
+        product.name,
+        Number(product.sellPrice),
+        store.id,
+        product.image || product.images?.[0],
+        1
+      );
+    }
   };
 
   const formatPrice = (price: number): string => {
@@ -113,12 +145,7 @@ export default function StorePage() {
     return `$${formattedInteger}`;
   };
 
-  const cartTotal = Array.from(cart.entries()).reduce((sum, [productId, qty]) => {
-    const product = products.find((p) => p.id === productId);
-    return sum + (product ? Number(product.sellPrice) * qty : 0);
-  }, 0);
-
-  const cartItemsCount = Array.from(cart.values()).reduce((sum, qty) => sum + qty, 0);
+  const cartItemsCount = getCartItemsCount(store?.slug || undefined);
 
   if (!store) {
     return (
@@ -132,26 +159,43 @@ export default function StorePage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50 shadow-soft">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/marketplace" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
-                <Store className="h-5 w-5" />
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <Link href="/marketplace" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
+                <Store className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+              <span className="text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent hidden sm:inline">
                 Tiendazo Marketplace
               </span>
+              <span className="text-sm sm:hidden font-bold">Tiendazo</span>
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
               <Link href="/marketplace/cart">
-                <Button variant="outline" size="sm" className="relative">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Carrito
+                <Button variant="outline" size="sm" className="relative h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
+                  <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Carrito</span>
                   {cartItemsCount > 0 && (
-                    <Badge className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                    <Badge className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-[10px] sm:text-xs">
                       {cartItemsCount}
                     </Badge>
                   )}
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden md:inline-flex">
+                  <span className="hidden sm:inline">Iniciar Sesión</span>
+                  <span className="sm:hidden">Login</span>
+                </Button>
+              </Link>
+              <Link href="/register-client">
+                <Button variant="ghost" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden lg:inline-flex">
+                  Registrarse
+                </Button>
+              </Link>
+              <Link href="/client/orders">
+                <Button variant="ghost" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden xl:inline-flex">
+                  Mis Pedidos
                 </Button>
               </Link>
             </div>
@@ -168,20 +212,20 @@ export default function StorePage() {
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-8">
-            <div className="container mx-auto">
-              <div className="flex items-end gap-4">
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8">
+            <div className="container mx-auto px-3 sm:px-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-4">
                 {store.logo && (
                   <img
                     src={store.logo}
                     alt={store.name}
-                    className="h-24 w-24 rounded-2xl object-cover border-4 border-background shadow-soft-lg"
+                    className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-xl sm:rounded-2xl object-cover border-2 sm:border-4 border-background shadow-soft-lg flex-shrink-0"
                   />
                 )}
                 <div>
-                  <h1 className="text-4xl font-bold text-white mb-2">{store.name}</h1>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2 px-2 sm:px-0">{store.name}</h1>
                   {store.description && (
-                    <p className="text-white/90 max-w-2xl">{store.description}</p>
+                    <p className="text-sm sm:text-base text-white/90 max-w-2xl px-2 sm:px-0">{store.description}</p>
                   )}
                 </div>
               </div>
@@ -192,19 +236,19 @@ export default function StorePage() {
 
       {/* Store Info */}
       {!store.banner && (
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-4 mb-6">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
             {store.logo && (
               <img
                 src={store.logo}
                 alt={store.name}
-                className="h-20 w-20 rounded-xl object-cover border-2 border-border"
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover border-2 border-border flex-shrink-0"
               />
             )}
             <div>
-              <h1 className="text-3xl font-bold mb-2">{store.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">{store.name}</h1>
               {store.description && (
-                <p className="text-muted-foreground">{store.description}</p>
+                <p className="text-sm sm:text-base text-muted-foreground">{store.description}</p>
               )}
             </div>
           </div>
@@ -212,21 +256,21 @@ export default function StorePage() {
       )}
 
       {/* Products Section */}
-      <section className="container mx-auto px-4 py-8">
+      <section className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
         {/* Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 sm:h-5 sm:w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Buscar productos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 rounded-xl"
+              className="pl-9 sm:pl-10 h-10 sm:h-11 rounded-lg sm:rounded-xl text-sm sm:text-base"
             />
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-48 h-11 rounded-xl">
+            <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11 rounded-lg sm:rounded-xl text-sm sm:text-base">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
@@ -246,11 +290,22 @@ export default function StorePage() {
             <p className="text-muted-foreground">Cargando productos...</p>
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No se encontraron productos</p>
+          <div className="text-center py-12 space-y-4">
+            <p className="text-muted-foreground text-base sm:text-lg">
+              {searchTerm ? "No se encontraron productos con ese criterio de búsqueda" : "No se encontraron productos"}
+            </p>
+            {searchTerm && (
+              <Button
+                variant="outline"
+                onClick={() => setSearchTerm("")}
+                className="h-10 sm:h-11 text-sm sm:text-base"
+              >
+                Limpiar búsqueda
+              </Button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {products.map((product) => (
               <Card
                 key={product.id}
@@ -286,12 +341,13 @@ export default function StorePage() {
                     </span>
                   </div>
                   <Button
-                    className="w-full"
-                    onClick={() => addToCart(product.id)}
+                    className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                    onClick={() => addToCart(product)}
                     disabled={product.stock === 0}
                   >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Agregar al Carrito
+                    <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Agregar al Carrito</span>
+                    <span className="sm:hidden">Agregar</span>
                   </Button>
                 </CardContent>
               </Card>
@@ -301,9 +357,9 @@ export default function StorePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-card/50 mt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <footer className="border-t border-border/50 bg-card/50 mt-12 sm:mt-16 lg:mt-20">
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <div>
               <h3 className="font-semibold mb-4">{store.name}</h3>
               {store.description && (

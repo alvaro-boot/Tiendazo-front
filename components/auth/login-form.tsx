@@ -96,8 +96,12 @@ export function LoginForm() {
             </p>
             <p className="text-sm text-muted-foreground">
               ¿No tienes cuenta?{" "}
+              <Link href="/register-client" className="text-primary hover:underline">
+                Regístrate como cliente
+              </Link>
+              {" o "}
               <Link href="/register" className="text-primary hover:underline">
-                Regístrate
+                como administrador
               </Link>
             </p>
           </div>

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useForm } from "react-hook-form"
 
 interface ProductDialogProps {
@@ -35,6 +36,7 @@ interface ProductFormData {
   sellPrice: number
   stock: number
   minStock: number
+  isPublic: boolean
 }
 
 export function ProductDialog({ product, open, onOpenChange }: ProductDialogProps) {
@@ -61,6 +63,7 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
         sellPrice: product.sellPrice,
         stock: product.stock,
         minStock: product.minStock,
+        isPublic: product.isPublic || false,
       })
     } else {
       reset({
@@ -72,6 +75,7 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
         sellPrice: 0,
         stock: 0,
         minStock: 5,
+        isPublic: false,
       })
     }
   }, [product, reset, categories])
@@ -92,6 +96,7 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
         sellPrice: data.sellPrice,
         stock: data.stock,
         minStock: data.minStock,
+        isPublic: data.isPublic,
         storeId: user.storeId,
       };
 
@@ -105,7 +110,11 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
         console.log("✅ Producto creado exitosamente");
       }
 
-      await fetchProducts();
+      // La recarga ya se hace automáticamente en createProduct/updateProduct
+      // No es necesario llamar fetchProducts() de nuevo aquí
+      console.log("🔄 Lista de productos actualizada automáticamente");
+      
+      // Cerrar el diálogo (esto disparará el callback en el componente padre)
       onOpenChange(false);
     } catch (error: any) {
       console.error("❌ Error al guardar producto:", error);
@@ -229,6 +238,25 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
                 {...register("minStock", { required: true, valueAsNumber: true })} 
                 className="h-11 border-2 focus:border-primary transition-colors"
               />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-start space-x-3 p-4 rounded-lg border-2 bg-muted/30 hover:bg-muted/50 transition-colors">
+              <Checkbox
+                id="isPublic"
+                checked={watch("isPublic")}
+                onCheckedChange={(checked) => setValue("isPublic", checked as boolean)}
+                className="mt-1"
+              />
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="isPublic" className="font-semibold cursor-pointer text-base">
+                  Producto Público (Visible en Marketplace)
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Si está marcado, este producto será visible en el marketplace público de tu tienda y podrá ser comprado por clientes
+                </p>
+              </div>
             </div>
           </div>
 

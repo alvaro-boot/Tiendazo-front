@@ -45,10 +45,13 @@ export default function ProductsPage() {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
       try {
         await deleteProduct(id)
-        await fetchProducts()
+        // La recarga ya se hace automáticamente en deleteProduct
+        // No es necesario llamar fetchProducts() de nuevo
       } catch (error: any) {
         console.error("❌ Error al eliminar producto:", error);
         alert(`Error al eliminar producto: ${error.message || "Error desconocido"}`);
+        // Recargar productos incluso si hay error para asegurar sincronización
+        await fetchProducts()
       }
     }
   }
@@ -140,13 +143,14 @@ export default function ProductsPage() {
                 <TableHead className="text-right hidden lg:table-cell min-w-[100px]">Precio Compra</TableHead>
                 <TableHead className="text-right min-w-[80px]">Stock</TableHead>
                 <TableHead className="hidden md:table-cell min-w-[100px]">Estado</TableHead>
+                <TableHead className="hidden lg:table-cell min-w-[110px]">Marketplace</TableHead>
                 <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   No se encontraron productos
                 </TableCell>
               </TableRow>
@@ -178,6 +182,15 @@ export default function ProductsPage() {
                     <TableCell className="hidden md:table-cell">
                       <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>
                     </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {product.isPublic ? (
+                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                          Público
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Privado</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 
@@ -207,11 +220,39 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <ProductDialog product={selectedProduct} open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen} />
+      <ProductDialog 
+        product={selectedProduct} 
+        open={isProductDialogOpen} 
+        onOpenChange={(open) => {
+          setIsProductDialogOpen(open);
+          if (!open) {
+            // La recarga ya se hace automáticamente en createProduct/updateProduct
+            // Solo limpiar el producto seleccionado
+            setSelectedProduct(null);
+          }
+        }} 
+      />
 
-      <CategoryDialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen} />
+      <CategoryDialog 
+        open={isCategoryDialogOpen} 
+        onOpenChange={(open) => {
+          setIsCategoryDialogOpen(open);
+          // No es necesario recargar productos aquí, las categorías no afectan la lista de productos
+        }} 
+      />
 
-      <StockDialog product={selectedProduct} open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen} />
+      <StockDialog 
+        product={selectedProduct} 
+        open={isStockDialogOpen} 
+        onOpenChange={(open) => {
+          setIsStockDialogOpen(open);
+          if (!open) {
+            // La recarga ya se hace automáticamente en el StockDialog
+            // Solo limpiar el producto seleccionado
+            setSelectedProduct(null);
+          }
+        }} 
+      />
     </div>
   )
 }

@@ -79,6 +79,7 @@ export interface Product {
   barcode: string;
   categoryId: number;
   storeId: number;
+  isPublic?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +94,7 @@ export interface ProductData {
   barcode: string;
   categoryId: number;
   storeId: number;
+  isPublic?: boolean;
 }
 
 // SaleDetail completo (con subtotal calculado) - usado al recibir datos del backend

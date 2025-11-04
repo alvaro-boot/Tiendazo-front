@@ -132,7 +132,8 @@ export const useProducts = (storeId?: number) => {
         stock: Number(newProduct.stock || 0),
         minStock: Number(newProduct.minStock || 0),
       };
-      setProducts((prev) => [...prev, normalizedProduct]);
+      // Recargar productos desde el servidor para obtener datos actualizados
+      await fetchProducts();
       return normalizedProduct;
     } catch (err) {
       const errorMessage = handleApiError(err);
@@ -149,7 +150,9 @@ export const useProducts = (storeId?: number) => {
         id,
         productData
       );
-      // Normalizar el producto actualizado
+      // Recargar productos desde el servidor para obtener datos actualizados
+      await fetchProducts();
+      // Normalizar el producto actualizado para retornarlo
       const normalizedProduct = {
         ...updatedProduct,
         purchasePrice: Number(updatedProduct.purchasePrice || 0),
@@ -157,9 +160,6 @@ export const useProducts = (storeId?: number) => {
         stock: Number(updatedProduct.stock || 0),
         minStock: Number(updatedProduct.minStock || 0),
       };
-      setProducts((prev) =>
-        prev.map((product) => (product.id === id ? normalizedProduct : product))
-      );
       return normalizedProduct;
     } catch (err) {
       const errorMessage = handleApiError(err);
@@ -170,7 +170,8 @@ export const useProducts = (storeId?: number) => {
   const deleteProduct = async (id: number) => {
     try {
       await productService.deleteProduct(id);
-      setProducts((prev) => prev.filter((product) => product.id !== id));
+      // Recargar productos desde el servidor para obtener datos actualizados
+      await fetchProducts();
     } catch (err) {
       const errorMessage = handleApiError(err);
       throw errorMessage;

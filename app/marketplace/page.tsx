@@ -110,20 +110,38 @@ export default function MarketplacePage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50 shadow-soft">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/marketplace" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
-                <Store className="h-5 w-5" />
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <Link href="/marketplace" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
+                <Store className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+              <span className="text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent hidden sm:inline">
                 Tiendazo Marketplace
               </span>
+              <span className="text-sm sm:hidden font-bold">Tiendazo</span>
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+              <Link href="/marketplace/cart">
+                <Button variant="outline" size="sm" className="relative h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
+                  <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Carrito</span>
+                </Button>
+              </Link>
               <Link href="/login">
-                <Button variant="outline" size="sm">
-                  Iniciar Sesión
+                <Button variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Iniciar Sesión</span>
+                  <span className="sm:hidden">Login</span>
+                </Button>
+              </Link>
+              <Link href="/register-client">
+                <Button variant="ghost" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden md:inline-flex">
+                  Registrarse
+                </Button>
+              </Link>
+              <Link href="/client/orders">
+                <Button variant="ghost" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden lg:inline-flex">
+                  Mis Pedidos
                 </Button>
               </Link>
             </div>
@@ -132,26 +150,26 @@ export default function MarketplacePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+      <section className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12">
+        <div className="text-center mb-6 sm:mb-8 lg:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent px-2">
             Descubre las Mejores Tiendas
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base lg:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
             Explora productos únicos de tiendas locales y encuentra lo que necesitas
           </p>
         </div>
 
         {/* Search */}
-        <div className="max-w-2xl mx-auto mb-12">
+        <div className="max-w-2xl mx-auto mb-6 sm:mb-8 lg:mb-12 px-2">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 sm:left-4 top-1/2 h-4 w-4 sm:h-5 sm:w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Buscar tiendas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-12 rounded-xl text-base"
+              className="pl-10 sm:pl-12 h-10 sm:h-12 rounded-lg sm:rounded-xl text-sm sm:text-base"
             />
           </div>
         </div>
@@ -165,8 +183,8 @@ export default function MarketplacePage() {
           <div className="text-center py-12">
             <p className="text-muted-foreground">No se encontraron tiendas</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2">
             {filteredStores.map((store) => (
               <Link key={store.id} href={`/marketplace/tienda/${store.slug}`}>
                 <Card className="group hover:shadow-soft-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer border-2 border-border/50">
