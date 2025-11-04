@@ -40,11 +40,16 @@ export interface LoginResponse {
 export interface Store {
   id: number;
   name: string;
-  description: string;
+  description?: string;
   address: string;
-  phone: string;
-  email: string;
+  phone?: string;
+  email?: string;
   currency?: string; // Moneda de la tienda
+  type?: "INTERNAL" | "PUBLIC"; // Tipo de tienda
+  isPublic?: boolean; // Si está visible públicamente
+  slug?: string; // URL amigable para la tienda
+  logo?: string; // URL del logo
+  banner?: string; // URL del banner
   createdAt: string;
   updatedAt: string;
 }
@@ -449,7 +454,7 @@ export const storeService = {
   },
 
   async updateStore(id: number, storeData: Partial<StoreData>): Promise<Store> {
-    const response = await api.put(`/stores/${id}`, storeData);
+    const response = await api.patch(`/stores/${id}`, storeData);
     return response.data;
   },
 
