@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
 import { authService } from "@/lib/services";
 import { Lock, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 
-export function ResetPasswordForm() {
+function ResetPasswordFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
@@ -208,3 +208,22 @@ export function ResetPasswordForm() {
   );
 }
 
+export function ResetPasswordForm() {
+  return (
+    <Suspense fallback={
+      <Card>
+        <CardHeader>
+          <CardTitle>Cargando...</CardTitle>
+          <CardDescription>Por favor espera mientras cargamos el formulario</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    }>
+      <ResetPasswordFormContent />
+    </Suspense>
+  );
+}
