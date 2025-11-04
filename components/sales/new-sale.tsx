@@ -805,7 +805,6 @@ export function NewSale() {
           </div>
         </DialogContent>
       </Dialog>
-      </div>
     </div>
   );
 }
