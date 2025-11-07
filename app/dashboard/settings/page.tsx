@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuthContext } from "@/lib/auth-context";
-import { storeService, StoreData } from "@/lib/services";
+import { storeService, storeThemeService, StoreData, StoreTheme, StoreThemeData } from "@/lib/services";
 import { config } from "@/lib/config";
 import {
   Card,
@@ -36,6 +36,8 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [storeData, setStoreData] = useState<any>(null);
+  const [themeData, setThemeData] = useState<StoreTheme | null>(null);
+  const [themeLoading, setThemeLoading] = useState(false);
 
   const storeForm = useForm<StoreFormData>({
     defaultValues: {
@@ -51,10 +53,11 @@ export default function SettingsPage() {
     },
   });
 
-  // Cargar datos de la tienda
+  // Cargar datos de la tienda y tema
   useEffect(() => {
     if (user?.storeId) {
       loadStoreData();
+      loadThemeData();
     }
   }, [user?.storeId]);
 
@@ -76,6 +79,55 @@ export default function SettingsPage() {
     } catch (err: any) {
       console.error("Error cargando datos de tienda:", err);
       setError("Error al cargar los datos de la tienda");
+    }
+  };
+
+  const loadThemeData = async () => {
+    if (!user?.storeId) return;
+    
+    try {
+      setThemeLoading(true);
+      const theme = await storeThemeService.getTheme(user.storeId);
+      setThemeData(theme);
+    } catch (err: any) {
+      // Si no existe tema, se creará automáticamente al guardar
+      console.log("No se encontró tema para esta tienda, se creará uno nuevo");
+      setThemeData(null);
+    } finally {
+      setThemeLoading(false);
+    }
+  };
+
+  const onThemeSubmit = async (themeFormData: StoreThemeData) => {
+    if (!user?.storeId) {
+      setError("No se encontró la tienda asociada");
+      return;
+    }
+
+    setThemeLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      let theme: StoreTheme;
+      
+      if (themeData) {
+        // Actualizar tema existente
+        theme = await storeThemeService.updateTheme(user.storeId, themeFormData);
+      } else {
+        // Crear nuevo tema
+        theme = await storeThemeService.createTheme(user.storeId, themeFormData);
+      }
+
+      setThemeData(theme);
+      setSuccess("Personalización de tema guardada exitosamente");
+      
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      console.error("Error guardando tema:", err);
+      setError(err.response?.data?.message || err.message || "Error al guardar el tema");
+    } finally {
+      setThemeLoading(false);
     }
   };
 
@@ -145,6 +197,7 @@ export default function SettingsPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Información de la Tienda */}
         <Card className="border-2 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -331,6 +384,281 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Personalización de Tema - Solo para tiendas PUBLIC */}
+      {storeType === "PUBLIC" && (
+        <Card className="border-2 shadow-lg mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SettingsIcon className="h-5 w-5 text-primary" />
+              Personalización de Tema
+            </CardTitle>
+            <CardDescription>
+              Personaliza el diseño y apariencia de tu página web
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {themeLoading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Cargando tema...</p>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const themeData: StoreThemeData = {
+                    template: formData.get("template") as "MODERN" | "MINIMALIST" | "ELEGANT",
+                    primaryColor: formData.get("primaryColor") as string || undefined,
+                    secondaryColor: formData.get("secondaryColor") as string || undefined,
+                    accentColor: formData.get("accentColor") as string || undefined,
+                    backgroundColor: formData.get("backgroundColor") as string || undefined,
+                    textColor: formData.get("textColor") as string || undefined,
+                    fontFamily: formData.get("fontFamily") as string || undefined,
+                    headingFont: formData.get("headingFont") as string || undefined,
+                    bodyFont: formData.get("bodyFont") as string || undefined,
+                    showReviews: formData.get("showReviews") === "on",
+                    showFeatured: formData.get("showFeatured") === "on",
+                    showCategories: formData.get("showCategories") === "on",
+                    showContact: formData.get("showContact") === "on",
+                    showBlog: formData.get("showBlog") === "on",
+                    googleAnalyticsId: formData.get("googleAnalyticsId") as string || undefined,
+                    facebookPixelId: formData.get("facebookPixelId") as string || undefined,
+                    mailchimpListId: formData.get("mailchimpListId") as string || undefined,
+                  };
+                  onThemeSubmit(themeData);
+                }}
+                className="space-y-4"
+              >
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="template">Plantilla</Label>
+                    <select
+                      id="template"
+                      name="template"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      defaultValue={themeData?.template || "MODERN"}
+                    >
+                      <option value="MODERN">Moderno</option>
+                      <option value="MINIMALIST">Minimalista</option>
+                      <option value="ELEGANT">Elegante</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="fontFamily">Tipografía</Label>
+                    <select
+                      id="fontFamily"
+                      name="fontFamily"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      defaultValue={themeData?.fontFamily || "Inter"}
+                    >
+                      <option value="Inter">Inter</option>
+                      <option value="Roboto">Roboto</option>
+                      <option value="Poppins">Poppins</option>
+                      <option value="Open Sans">Open Sans</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryColor">Color Primario</Label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        id="primaryColorPicker"
+                        className="h-10 w-20 rounded border"
+                        defaultValue={themeData?.primaryColor || "#3B82F6"}
+                        onChange={(e) => {
+                          const input = document.getElementById("primaryColor") as HTMLInputElement;
+                          if (input) input.value = e.target.value;
+                        }}
+                      />
+                      <Input
+                        id="primaryColor"
+                        name="primaryColor"
+                        type="text"
+                        placeholder="#3B82F6"
+                        defaultValue={themeData?.primaryColor || "#3B82F6"}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryColor">Color Secundario</Label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        id="secondaryColorPicker"
+                        className="h-10 w-20 rounded border"
+                        defaultValue={themeData?.secondaryColor || "#8B5CF6"}
+                        onChange={(e) => {
+                          const input = document.getElementById("secondaryColor") as HTMLInputElement;
+                          if (input) input.value = e.target.value;
+                        }}
+                      />
+                      <Input
+                        id="secondaryColor"
+                        name="secondaryColor"
+                        type="text"
+                        placeholder="#8B5CF6"
+                        defaultValue={themeData?.secondaryColor || "#8B5CF6"}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="accentColor">Color de Acento</Label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        id="accentColorPicker"
+                        className="h-10 w-20 rounded border"
+                        defaultValue={themeData?.accentColor || "#10B981"}
+                        onChange={(e) => {
+                          const input = document.getElementById("accentColor") as HTMLInputElement;
+                          if (input) input.value = e.target.value;
+                        }}
+                      />
+                      <Input
+                        id="accentColor"
+                        name="accentColor"
+                        type="text"
+                        placeholder="#10B981"
+                        defaultValue={themeData?.accentColor || "#10B981"}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="backgroundColor">Color de Fondo</Label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        id="backgroundColorPicker"
+                        className="h-10 w-20 rounded border"
+                        defaultValue={themeData?.backgroundColor || "#FFFFFF"}
+                        onChange={(e) => {
+                          const input = document.getElementById("backgroundColor") as HTMLInputElement;
+                          if (input) input.value = e.target.value;
+                        }}
+                      />
+                      <Input
+                        id="backgroundColor"
+                        name="backgroundColor"
+                        type="text"
+                        placeholder="#FFFFFF"
+                        defaultValue={themeData?.backgroundColor || "#FFFFFF"}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                  <Label className="text-base font-semibold">Secciones de la Página</Label>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="show-reviews"
+                        name="showReviews"
+                        defaultChecked={themeData?.showReviews ?? true}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor="show-reviews" className="cursor-pointer">Mostrar Reseñas</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="show-featured"
+                        name="showFeatured"
+                        defaultChecked={themeData?.showFeatured ?? true}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor="show-featured" className="cursor-pointer">Productos Destacados</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="show-categories"
+                        name="showCategories"
+                        defaultChecked={themeData?.showCategories ?? true}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor="show-categories" className="cursor-pointer">Categorías</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="show-contact"
+                        name="showContact"
+                        defaultChecked={themeData?.showContact ?? true}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor="show-contact" className="cursor-pointer">Información de Contacto</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="show-blog"
+                        name="showBlog"
+                        defaultChecked={themeData?.showBlog ?? false}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor="show-blog" className="cursor-pointer">Blog/Noticias</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                  <Label className="text-base font-semibold">Integraciones de Marketing</Label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="googleAnalyticsId">Google Analytics ID</Label>
+                      <Input
+                        id="googleAnalyticsId"
+                        name="googleAnalyticsId"
+                        type="text"
+                        placeholder="UA-XXXXXXXXX-X"
+                        defaultValue={themeData?.googleAnalyticsId || ""}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="facebookPixelId">Facebook Pixel ID</Label>
+                      <Input
+                        id="facebookPixelId"
+                        name="facebookPixelId"
+                        type="text"
+                        placeholder="123456789"
+                        defaultValue={themeData?.facebookPixelId || ""}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mailchimpListId">Mailchimp List ID</Label>
+                      <Input
+                        id="mailchimpListId"
+                        name="mailchimpListId"
+                        type="text"
+                        placeholder="abc123"
+                        defaultValue={themeData?.mailchimpListId || ""}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <Button type="submit" className="w-full" disabled={themeLoading}>
+                    {themeLoading ? "Guardando..." : "Guardar Personalización"}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

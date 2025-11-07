@@ -3,14 +3,23 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Store, ShoppingCart, Search, Filter, MapPin, Phone, Mail, Star } from "lucide-react";
+import { Store, ShoppingCart, Search, MapPin, Phone, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { marketplaceService } from "@/lib/services";
+import { marketplaceService, storeThemeService, StoreTheme } from "@/lib/services";
 import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
+import {
+  FeaturedProductsSection,
+  CategoriesSection,
+  ReviewsSection,
+  BlogSection,
+  ContactSection,
+} from "@/components/store-sections";
+import { StoreCart } from "@/components/store-sections/store-cart";
 
 interface StoreInfo {
   id: number;
@@ -45,10 +54,13 @@ export default function StorePage() {
   
   const [store, setStore] = useState<StoreInfo | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]); // Copia de todos los productos
+  const [theme, setTheme] = useState<StoreTheme | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const { addItem, getCartItemsCount } = useCart();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (slug) {
@@ -60,9 +72,52 @@ export default function StorePage() {
   const loadStore = async () => {
     try {
       const data = await marketplaceService.getStoreBySlug(slug);
-      setStore(data);
+      
+      // Limpiar y validar datos de la tienda
+      const cleanName = data.name?.trim() || "";
+      const cleanDescription = data.description?.trim() || "";
+      
+      // Validar que el nombre no sea placeholder o basura
+      const isValidName = cleanName && 
+        cleanName.length > 2 && 
+        !cleanName.toLowerCase().includes('pendejo') &&
+        !cleanName.toLowerCase().includes('test') &&
+        !cleanName.toLowerCase().includes('placeholder') &&
+        !cleanName.toLowerCase().includes('hola pendejo');
+      
+      const isValidDescription = cleanDescription && 
+        cleanDescription.length > 10 && 
+        !cleanDescription.includes('<') && 
+        !cleanDescription.toLowerCase().includes('pendejo') &&
+        !cleanDescription.toLowerCase().includes('hola pendejo');
+      
+      const cleanData: StoreInfo = {
+        ...data,
+        name: isValidName ? cleanName : "Mi Tienda",
+        description: isValidDescription ? cleanDescription : "",
+        address: data.address?.trim() || "",
+        phone: data.phone?.trim() || "",
+        email: data.email?.trim() || "",
+        logo: data.logo?.trim() || "",
+        banner: data.banner?.trim() || "",
+      };
+      
+      console.log("🏪 Tienda cargada:", cleanData);
+      setStore(cleanData);
+      
+      // Cargar tema de la tienda usando el método público
+      try {
+        const themeData = await marketplaceService.getStoreTheme(slug);
+        setTheme(themeData);
+        console.log("✅ Tema cargado:", themeData);
+      } catch (error) {
+        // Si no hay tema, usar valores por defecto
+        console.log("⚠️ No se encontró tema personalizado, usando valores por defecto", error);
+      }
     } catch (error) {
       console.error("Error cargando tienda:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,6 +143,7 @@ export default function StorePage() {
       console.log("📦 Cantidad de productos:", products.length);
       
       setProducts(products);
+      setAllProducts(products); // Guardar copia de todos los productos
     } catch (error) {
       console.error("❌ Error cargando productos:", error);
       console.error("❌ Detalles del error:", {
@@ -119,17 +175,39 @@ export default function StorePage() {
   }, [searchTerm, sortBy]);
 
   const addToCart = (product: Product) => {
-    if (store) {
-      addItem(
-        store.slug,
-        product.id,
-        product.name,
-        Number(product.sellPrice),
-        store.id,
-        product.image || product.images?.[0],
-        1
-      );
+    if (!store) {
+      toast({
+        title: "Error",
+        description: "No se pudo agregar el producto. Tienda no encontrada.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    if (product.stock === 0) {
+      toast({
+        title: "Producto agotado",
+        description: "Este producto no está disponible en este momento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addItem(
+      store.slug,
+      product.id,
+      product.name,
+      Number(product.sellPrice),
+      store.id,
+      product.image || product.images?.[0],
+      1
+    );
+
+    toast({
+      title: "Producto agregado",
+      description: `${product.name} se agregó al carrito.`,
+      duration: 2000,
+    });
   };
 
   const formatPrice = (price: number): string => {
@@ -145,7 +223,12 @@ export default function StorePage() {
     return `$${formattedInteger}`;
   };
 
-  const cartItemsCount = getCartItemsCount(store?.slug || undefined);
+  // Título de la página dinámico
+  useEffect(() => {
+    if (store) {
+      document.title = `${store.name}${store.description && store.description.length > 30 ? ' - ' + store.description.substring(0, 30) + '...' : ''}`;
+    }
+  }, [store]);
 
   if (!store) {
     return (
@@ -155,50 +238,154 @@ export default function StorePage() {
     );
   }
 
+  // Aplicar estilos del tema
+  const template = theme?.template || "MODERN";
+  const primaryColor = theme?.primaryColor || (template === "ELEGANT" ? "#1a1a1a" : template === "MINIMALIST" ? "#000000" : "#3B82F6");
+  const secondaryColor = theme?.secondaryColor || (template === "ELEGANT" ? "#8B7355" : template === "MINIMALIST" ? "#666666" : "#8B5CF6");
+  const accentColor = theme?.accentColor || (template === "ELEGANT" ? "#D4AF37" : template === "MINIMALIST" ? "#000000" : "#10B981");
+  const backgroundColor = theme?.backgroundColor || (template === "ELEGANT" ? "#FAFAFA" : "#FFFFFF");
+  const textColor = theme?.textColor || (template === "ELEGANT" ? "#2C2C2C" : template === "MINIMALIST" ? "#000000" : "#1F2937");
+  const fontFamily = theme?.fontFamily || (template === "ELEGANT" ? "Georgia, serif" : template === "MINIMALIST" ? "Helvetica, Arial, sans-serif" : "Inter, sans-serif");
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50 shadow-soft">
+    <div 
+      className="min-h-screen"
+      style={{
+        backgroundColor: backgroundColor,
+        color: textColor,
+        fontFamily: fontFamily,
+      }}
+    >
+      <style jsx global>{`
+        :root {
+          --store-primary: ${primaryColor};
+          --store-secondary: ${secondaryColor};
+          --store-accent: ${accentColor};
+          --store-bg: ${backgroundColor};
+          --store-text: ${textColor};
+        }
+        
+        /* Estilos según el template */
+        ${template === 'MODERN' ? `
+          .store-header {
+            background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%) !important;
+            color: white !important;
+          }
+        ` : template === 'MINIMALIST' ? `
+          .store-header {
+            border-bottom: 1px solid #e5e5e5 !important;
+            background: ${backgroundColor} !important;
+          }
+        ` : template === 'ELEGANT' ? `
+          .store-header {
+            background: ${primaryColor} !important;
+            color: white !important;
+            border-bottom: 4px solid ${accentColor} !important;
+          }
+        ` : ''}
+      `}</style>
+      {/* Header Personalizado de la Tienda */}
+      <header 
+        className={`store-header sticky top-0 z-50 shadow-md ${
+          template === 'MODERN' ? '' : 
+          template === 'MINIMALIST' ? 'border-b' : 
+          ''
+        }`}
+        style={{
+          background: template === 'MODERN' ? `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` :
+                        template === 'MINIMALIST' ? backgroundColor :
+                        primaryColor,
+          borderBottomColor: template === 'ELEGANT' ? accentColor : undefined,
+          borderBottomWidth: template === 'ELEGANT' ? '4px' : undefined,
+          color: template === 'MODERN' || template === 'ELEGANT' ? 'white' : textColor,
+        }}
+      >
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            <Link href="/marketplace" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
-                <Store className="h-4 w-4 sm:h-5 sm:w-5" />
-              </div>
-              <span className="text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent hidden sm:inline">
-                Tiendazo Marketplace
+            {/* Logo y Nombre de la Tienda */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              {store.logo ? (
+                <img
+                  src={store.logo}
+                  alt={store.name}
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div 
+                  className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl"
+                  style={{
+                    background: template === 'MODERN' ? 'rgba(255,255,255,0.2)' :
+                                template === 'MINIMALIST' ? primaryColor :
+                                'rgba(255,255,255,0.2)',
+                  }}
+                >
+                  <Store className="h-4 w-4 sm:h-5 sm:w-5" />
+                </div>
+              )}
+              <span 
+                className="text-base sm:text-lg lg:text-xl font-bold"
+                style={{
+                  color: template === 'MODERN' || template === 'ELEGANT' ? 'white' : textColor,
+                }}
+              >
+                {store.name}
               </span>
-              <span className="text-sm sm:hidden font-bold">Tiendazo</span>
-            </Link>
-            <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
-              <Link href="/marketplace/cart">
-                <Button variant="outline" size="sm" className="relative h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
-                  <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Carrito</span>
-                  {cartItemsCount > 0 && (
-                    <Badge className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-[10px] sm:text-xs">
-                      {cartItemsCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden md:inline-flex">
-                  <span className="hidden sm:inline">Iniciar Sesión</span>
-                  <span className="sm:hidden">Login</span>
-                </Button>
-              </Link>
-              <Link href="/register-client">
-                <Button variant="ghost" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden lg:inline-flex">
-                  Registrarse
-                </Button>
-              </Link>
-              <Link href="/client/orders">
-                <Button variant="ghost" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden xl:inline-flex">
-                  Mis Pedidos
-                </Button>
-              </Link>
             </div>
+            
+            {/* Navegación de la Tienda */}
+            <nav className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+              <Link href={`/marketplace/tienda/${slug}`}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+                  style={{
+                    color: template === 'MODERN' || template === 'ELEGANT' ? 'white' : textColor,
+                  }}
+                >
+                  Inicio
+                </Button>
+              </Link>
+              <Link href={`/marketplace/tienda/${slug}#productos`}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden sm:inline-flex"
+                  style={{
+                    color: template === 'MODERN' || template === 'ELEGANT' ? 'white' : textColor,
+                  }}
+                >
+                  Productos
+                </Button>
+              </Link>
+              <Link href={`/marketplace/tienda/${slug}#contacto`}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm hidden md:inline-flex"
+                  style={{
+                    color: template === 'MODERN' || template === 'ELEGANT' ? 'white' : textColor,
+                  }}
+                >
+                  Contacto
+                </Button>
+              </Link>
+              <StoreCart
+                storeSlug={slug}
+                theme={{
+                  primaryColor,
+                  secondaryColor,
+                  accentColor,
+                  backgroundColor,
+                  textColor,
+                  template,
+                }}
+                formatPrice={formatPrice}
+              />
+            </nav>
           </div>
         </div>
       </header>
@@ -210,6 +397,10 @@ export default function StorePage() {
             src={store.banner}
             alt={store.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              // Si el banner falla, ocultar el banner
+              e.currentTarget.style.display = 'none';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8">
@@ -220,12 +411,15 @@ export default function StorePage() {
                     src={store.logo}
                     alt={store.name}
                     className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-xl sm:rounded-2xl object-cover border-2 sm:border-4 border-background shadow-soft-lg flex-shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 )}
                 <div>
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2 px-2 sm:px-0">{store.name}</h1>
-                  {store.description && (
-                    <p className="text-sm sm:text-base text-white/90 max-w-2xl px-2 sm:px-0">{store.description}</p>
+                  {store.description && store.description.trim() && store.description.length > 10 && (
+                    <p className="text-sm sm:text-base text-white/90 max-w-2xl px-2 sm:px-0 line-clamp-2">{store.description}</p>
                   )}
                 </div>
               </div>
@@ -243,20 +437,139 @@ export default function StorePage() {
                 src={store.logo}
                 alt={store.name}
                 className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover border-2 border-border flex-shrink-0"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             )}
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">{store.name}</h1>
-              {store.description && (
-                <p className="text-sm sm:text-base text-muted-foreground">{store.description}</p>
+              {store.description && store.description.trim() && store.description.length > 10 && (
+                <p className="text-sm sm:text-base text-muted-foreground line-clamp-2">{store.description}</p>
               )}
             </div>
           </div>
         </div>
       )}
 
+      {/* Secciones dinámicas según configuración del tema */}
+      {theme?.showFeatured && (
+        <FeaturedProductsSection
+          products={allProducts}
+          theme={{
+            primaryColor,
+            secondaryColor,
+            accentColor,
+            backgroundColor,
+            textColor,
+            template,
+          }}
+          onAddToCart={addToCart}
+          formatPrice={formatPrice}
+          config={(() => {
+            try {
+              if (theme.layoutConfig) {
+                const parsed = typeof theme.layoutConfig === 'string' 
+                  ? JSON.parse(theme.layoutConfig) 
+                  : theme.layoutConfig;
+                return parsed?.featured;
+              }
+            } catch (e) {
+              console.error('Error parsing featured config:', e);
+            }
+            return undefined;
+          })()}
+        />
+      )}
+
+      {theme?.showCategories && (
+        <CategoriesSection
+          products={allProducts}
+          theme={{
+            primaryColor,
+            secondaryColor,
+            accentColor,
+            backgroundColor,
+            textColor,
+            template,
+          }}
+          onCategoryClick={(categoryName) => {
+            const filtered = allProducts.filter(p => p.category?.name === categoryName);
+            setProducts(filtered);
+            setTimeout(() => {
+              document.getElementById('productos')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
+          config={(() => {
+            try {
+              if (theme.layoutConfig) {
+                const parsed = typeof theme.layoutConfig === 'string' 
+                  ? JSON.parse(theme.layoutConfig) 
+                  : theme.layoutConfig;
+                return parsed?.categories;
+              }
+            } catch (e) {
+              console.error('Error parsing categories config:', e);
+            }
+            return undefined;
+          })()}
+        />
+      )}
+
+      {theme?.showReviews && (
+        <ReviewsSection
+          theme={{
+            primaryColor,
+            secondaryColor,
+            accentColor,
+            backgroundColor,
+            textColor,
+            template,
+          }}
+          config={(() => {
+            try {
+              if (theme.layoutConfig) {
+                const parsed = typeof theme.layoutConfig === 'string' 
+                  ? JSON.parse(theme.layoutConfig) 
+                  : theme.layoutConfig;
+                return parsed?.reviews;
+              }
+            } catch (e) {
+              console.error('Error parsing reviews config:', e);
+            }
+            return undefined;
+          })()}
+        />
+      )}
+
+      {theme?.showBlog && (
+        <BlogSection
+          theme={{
+            primaryColor,
+            secondaryColor,
+            accentColor,
+            backgroundColor,
+            textColor,
+            template,
+          }}
+          config={(() => {
+            try {
+              if (theme.layoutConfig) {
+                const parsed = typeof theme.layoutConfig === 'string' 
+                  ? JSON.parse(theme.layoutConfig) 
+                  : theme.layoutConfig;
+                return parsed?.blog;
+              }
+            } catch (e) {
+              console.error('Error parsing blog config:', e);
+            }
+            return undefined;
+          })()}
+        />
+      )}
+
       {/* Products Section */}
-      <section className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+      <section id="productos" className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
         {/* Filters */}
         <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
           <div className="relative flex-1 max-w-md">
@@ -336,12 +649,19 @@ export default function StorePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-bold text-primary">
+                    <span 
+                      className="text-2xl font-bold"
+                      style={{ color: primaryColor }}
+                    >
                       {formatPrice(Number(product.sellPrice))}
                     </span>
                   </div>
                   <Button
                     className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                    style={{
+                      backgroundColor: primaryColor,
+                      borderColor: primaryColor,
+                    }}
                     onClick={() => addToCart(product)}
                     disabled={product.stock === 0}
                   >
@@ -356,48 +676,33 @@ export default function StorePage() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 bg-card/50 mt-12 sm:mt-16 lg:mt-20">
-        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <div>
-              <h3 className="font-semibold mb-4">{store.name}</h3>
-              {store.description && (
-                <p className="text-sm text-muted-foreground">{store.description}</p>
-              )}
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Contacto</h3>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                {store.address && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{store.address}</span>
-                  </div>
-                )}
-                {store.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    <span>{store.phone}</span>
-                  </div>
-                )}
-                {store.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    <span>{store.email}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Tiendazo</h3>
-              <p className="text-sm text-muted-foreground">
-                © 2024 Tiendazo. Todos los derechos reservados.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Sección de Contacto */}
+      {theme?.showContact && (
+        <ContactSection
+          store={store}
+          theme={{
+            primaryColor,
+            secondaryColor,
+            accentColor,
+            backgroundColor,
+            textColor,
+            template,
+          }}
+          config={(() => {
+            try {
+              if (theme.layoutConfig) {
+                const parsed = typeof theme.layoutConfig === 'string' 
+                  ? JSON.parse(theme.layoutConfig) 
+                  : theme.layoutConfig;
+                return parsed?.contact;
+              }
+            } catch (e) {
+              console.error('Error parsing contact config:', e);
+            }
+            return undefined;
+          })()}
+        />
+      )}
     </div>
   );
 }

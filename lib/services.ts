@@ -223,6 +223,85 @@ export const authService = {
   },
 };
 
+// Interfaces para temas de tienda
+export interface StoreTheme {
+  id: number;
+  storeId: number;
+  template: "MODERN" | "MINIMALIST" | "ELEGANT";
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  fontFamily?: string;
+  headingFont?: string;
+  bodyFont?: string;
+  favicon?: string;
+  customBanner?: string;
+  showReviews: boolean;
+  showFeatured: boolean;
+  showCategories: boolean;
+  showContact: boolean;
+  showBlog: boolean;
+  layoutConfig?: any;
+  customDomain?: string;
+  subdomain?: string;
+  domainVerified: boolean;
+  googleAnalyticsId?: string;
+  facebookPixelId?: string;
+  mailchimpListId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StoreThemeData {
+  template?: "MODERN" | "MINIMALIST" | "ELEGANT";
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  fontFamily?: string;
+  headingFont?: string;
+  bodyFont?: string;
+  favicon?: string;
+  customBanner?: string;
+  showReviews?: boolean;
+  showFeatured?: boolean;
+  showCategories?: boolean;
+  showContact?: boolean;
+  showBlog?: boolean;
+  layoutConfig?: any;
+  customDomain?: string;
+  subdomain?: string;
+  googleAnalyticsId?: string;
+  facebookPixelId?: string;
+  mailchimpListId?: string;
+}
+
+// Servicio de temas de tienda
+export const storeThemeService = {
+  async getTheme(storeId: number): Promise<StoreTheme> {
+    const response = await api.get(`/stores/${storeId}/themes`);
+    return response.data;
+  },
+
+  async createTheme(storeId: number, themeData: StoreThemeData): Promise<StoreTheme> {
+    const response = await api.post(`/stores/${storeId}/themes`, themeData);
+    return response.data;
+  },
+
+  async updateTheme(storeId: number, themeData: StoreThemeData): Promise<StoreTheme> {
+    const response = await api.put(`/stores/${storeId}/themes`, themeData);
+    return response.data;
+  },
+
+  async verifyDomain(storeId: number): Promise<{ verified: boolean }> {
+    const response = await api.post(`/stores/${storeId}/themes/verify-domain`);
+    return response.data;
+  },
+};
+
 // Servicios del marketplace público
 export const marketplaceService = {
   async getPublicStores(): Promise<Store[]> {
@@ -232,6 +311,12 @@ export const marketplaceService = {
 
   async getStoreBySlug(slug: string): Promise<Store> {
     const response = await api.get(`/public/stores/${slug}`);
+    return response.data;
+  },
+
+  async getStoreTheme(slug: string): Promise<StoreTheme> {
+    // Usar endpoint público para obtener el tema
+    const response = await api.get(`/public/stores/${slug}/theme`);
     return response.data;
   },
 
