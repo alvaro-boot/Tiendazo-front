@@ -3,9 +3,11 @@ export const config = {
   // URLs de la API
   // Prioridad: Variable de entorno > Valor por defecto (local)
   API_BASE_URL:
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api",
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://https-github-com-alvaro-boot-tiendazo-api.onrender.com/api",
   API_DOCS_URL:
-    process.env.NEXT_PUBLIC_API_DOCS_URL || "http://localhost:3000/api/docs",
+    process.env.NEXT_PUBLIC_API_DOCS_URL ||
+    "https://https-github-com-alvaro-boot-tiendazo-api.onrender.com/api/docs",
 
   // Configuración de la aplicación
   APP_NAME: "Tiendazo",
