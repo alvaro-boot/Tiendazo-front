@@ -250,6 +250,8 @@ export interface StoreTheme {
   googleAnalyticsId?: string;
   facebookPixelId?: string;
   mailchimpListId?: string;
+  sitePath?: string | null;
+  indexPath?: string | null;
   createdAt: string;
   updatedAt: string;
 }
