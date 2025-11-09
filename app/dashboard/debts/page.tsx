@@ -15,6 +15,7 @@ import { Search, DollarSign, Eye, TrendingDown, AlertCircle, Calendar, FileText,
 import { PaymentDialog } from "@/components/debts/payment-dialog"
 import { DebtDetailDialog } from "@/components/debts/debt-detail-dialog"
 import { AddDebtDialog } from "@/components/debts/add-debt-dialog"
+import { formatCurrency } from "@/lib/utils"
 
 export default function DebtsPage() {
   const { user, isAdmin } = useAuthContext()
@@ -95,17 +96,19 @@ export default function DebtsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
-        <div>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b">
+        <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
             Fiados
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">Gestiona las deudas de tus clientes</p>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
+            Gestiona las deudas de tus clientes y lleva el control de pagos en cualquier dispositivo.
+          </p>
         </div>
         <Button
           variant="outline"
           onClick={() => setShowDebtsReport(!showDebtsReport)}
-          className="transition-all hover:scale-105 w-full sm:w-auto"
+          className="transition-all hover:scale-105 w-full md:w-auto justify-center"
         >
           <Calendar className="mr-2 h-4 w-4" />
           {showDebtsReport ? "Ocultar Reporte" : "Ver Reporte"}
@@ -113,7 +116,7 @@ export default function DebtsPage() {
       </div>
 
       {/* Cards de estadísticas */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
         <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/50">
           <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -123,7 +126,7 @@ export default function DebtsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{stats.totalClients}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{stats.totalClients}</p>
             <p className="text-xs text-muted-foreground mt-1">Clientes con deuda pendiente</p>
           </CardContent>
         </Card>
@@ -137,7 +140,7 @@ export default function DebtsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-red-600">${totalDebt.toFixed(2)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-red-600">{formatCurrency(totalDebt)}</p>
             <p className="text-xs text-muted-foreground mt-1">Monto total pendiente</p>
           </CardContent>
         </Card>
@@ -151,7 +154,7 @@ export default function DebtsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{stats.clientsWithPayments}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{stats.clientsWithPayments}</p>
             <p className="text-xs text-muted-foreground mt-1">Clientes con historial de pagos</p>
           </CardContent>
         </Card>
@@ -176,7 +179,7 @@ export default function DebtsPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -193,7 +196,7 @@ export default function DebtsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow className="border-b-2">
                     <TableHead className="font-semibold min-w-[150px]">Cliente</TableHead>
@@ -228,15 +231,15 @@ export default function DebtsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className="text-lg sm:text-xl font-bold text-red-600">
-                          ${info.totalDebt.toFixed(2)}
+                        <span className="text-base sm:text-lg font-bold text-red-600 whitespace-nowrap">
+                          {formatCurrency(info.totalDebt)}
                         </span>
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground hidden lg:table-cell">
                         {info.lastPayment ? (
                           <div className="space-y-1">
                             <p className="text-sm font-medium">
-                              ${Number(info.lastPayment.amount).toFixed(2)}
+                              {formatCurrency(Number(info.lastPayment.amount))}
                             </p>
                             <p className="text-xs">
                               {new Date(info.lastPayment.createdAt).toLocaleDateString("es-ES")}
@@ -255,7 +258,7 @@ export default function DebtsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -429,7 +432,7 @@ function DebtsReportSection({
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-green-600">
-                    ${reportData.summary?.totalPayments?.toFixed(2) || "0.00"}
+                    {formatCurrency(reportData.summary?.totalPayments || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">En el período</p>
                 </CardContent>
@@ -455,7 +458,7 @@ function DebtsReportSection({
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold">
-                    ${reportData.summary?.averagePayment?.toFixed(2) || "0.00"}
+                    {formatCurrency(reportData.summary?.averagePayment || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">Por transacción</p>
                 </CardContent>
@@ -468,8 +471,9 @@ function DebtsReportSection({
                 <CardHeader>
                   <CardTitle>Pagos por Tipo</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Table>
+                <CardContent className="px-0">
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-full">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Tipo de Pago</TableHead>
@@ -487,12 +491,13 @@ function DebtsReportSection({
                           </TableCell>
                           <TableCell className="text-right">{data.count}</TableCell>
                           <TableCell className="text-right font-semibold">
-                            ${data.total.toFixed(2)}
+                            {formatCurrency(data.total)}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -503,8 +508,9 @@ function DebtsReportSection({
                 <CardHeader>
                   <CardTitle>Historial de Pagos</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Table>
+                <CardContent className="px-0">
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-full">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Cliente</TableHead>
@@ -532,18 +538,19 @@ function DebtsReportSection({
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-semibold text-green-600">
-                            ${Number(payment.amount || 0).toFixed(2)}
+                            {formatCurrency(Number(payment.amount || 0))}
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground">
-                            ${Number(payment.previousDebt || 0).toFixed(2)}
+                            {formatCurrency(Number(payment.previousDebt || 0))}
                           </TableCell>
                           <TableCell className="text-right font-semibold text-red-600">
-                            ${Number(payment.newDebt || 0).toFixed(2)}
+                            {formatCurrency(Number(payment.newDebt || 0))}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}

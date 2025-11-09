@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Search, Eye, ShoppingCart, TrendingUp, DollarSign, Trash2, Calendar, Filter } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { formatCurrency } from "@/lib/utils"
 
 export function SalesHistory() {
   const { user, isAdmin } = useAuthContext()
@@ -127,8 +128,8 @@ export function SalesHistory() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-            <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-col md:flex-row gap-4 md:items-end">
+            <div className="flex gap-2 flex-wrap w-full md:w-auto">
               <Button
                 variant={dateFilter === "today" ? "default" : "outline"}
                 onClick={() => {
@@ -139,7 +140,7 @@ export function SalesHistory() {
                   const day = String(today.getDate()).padStart(2, '0')
                   setSelectedDate(`${year}-${month}-${day}`)
                 }}
-                className="transition-all hover:scale-105"
+                className="transition-all hover:scale-105 flex-1 md:flex-none justify-center"
               >
                 <Calendar className="mr-2 h-4 w-4" />
                 Hoy
@@ -147,13 +148,13 @@ export function SalesHistory() {
               <Button
                 variant={dateFilter === "custom" ? "default" : "outline"}
                 onClick={() => setDateFilter("custom")}
-                className="transition-all hover:scale-105"
+                className="transition-all hover:scale-105 flex-1 md:flex-none justify-center"
               >
                 Fecha Personalizada
               </Button>
             </div>
             {dateFilter === "custom" && (
-              <div className="space-y-2 flex-1 sm:max-w-xs">
+              <div className="space-y-2 flex-1 md:max-w-xs">
                 <Label htmlFor="selectedDate" className="text-sm font-medium">
                   Seleccionar Fecha
                 </Label>
@@ -167,7 +168,7 @@ export function SalesHistory() {
               </div>
             )}
             {dateFilter === "today" && (
-              <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 Mostrando ventas del {new Date(selectedDate).toLocaleDateString("es-ES", { 
                   weekday: "long", 
@@ -206,7 +207,7 @@ export function SalesHistory() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-green-600">{formatCurrency(totalRevenue)}</p>
             <p className="text-xs text-muted-foreground mt-1">Ingresos acumulados</p>
           </CardContent>
         </Card>
@@ -220,7 +221,7 @@ export function SalesHistory() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-green-600">${totalProfit.toFixed(2)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-green-600">{formatCurrency(totalProfit)}</p>
             <p className="text-xs text-muted-foreground mt-1">Ganancia neta</p>
           </CardContent>
         </Card>
@@ -245,91 +246,97 @@ export function SalesHistory() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Factura</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Método de Pago</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+        <CardContent className="px-0">
+          <div className="overflow-x-auto">
+            <Table className="min-w-full">
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Cargando ventas...
-                  </TableCell>
+                  <TableHead>Factura</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Método de Pago</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
-              ) : filteredSales.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    <div className="flex flex-col items-center gap-2">
-                      <p className="text-sm">No se encontraron ventas</p>
-                      {!storeId && (
-                        <p className="text-xs text-muted-foreground">Asegúrate de estar asociado a una tienda</p>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredSales.map((sale) => (
-                  <TableRow key={sale.id} className="hover:bg-muted/50 transition-colors border-b">
-                    <TableCell className="font-mono text-sm font-semibold">
-                      {sale.invoiceNumber || `V-${sale.id}`}
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      Cargando ventas...
                     </TableCell>
-                    <TableCell className="font-medium">{sale.client?.fullName || "Cliente general"}</TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(sale.createdAt).toLocaleString("es-ES")}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={sale.isCredit ? "outline" : "default"}
-                        className={sale.isCredit ? "border-amber-500 text-amber-700 dark:text-amber-400" : ""}
-                      >
-                        {sale.isCredit ? "Fiado" : "Contado"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-lg text-primary">${Number(sale.total).toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setSelectedSale(sale)}
-                          className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {isAdmin && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={async () => {
-                              if (confirm(`¿Estás seguro de eliminar la venta ${sale.invoiceNumber}?`)) {
-                                try {
-                                  await deleteSale(sale.id);
-                                  // Recargar las ventas después de eliminar
-                                  await loadFilteredSales();
-                                  alert("Venta eliminada exitosamente");
-                                } catch (error: any) {
-                                  alert(`Error al eliminar venta: ${error.message || "Error desconocido"}`);
-                                }
-                              }
-                            }}
-                            className="hover:bg-destructive/10 hover:text-destructive transition-all hover:scale-110"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                  </TableRow>
+                ) : filteredSales.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      <div className="flex flex-col items-center gap-2">
+                        <p className="text-sm">No se encontraron ventas</p>
+                        {!storeId && (
+                          <p className="text-xs text-muted-foreground">Asegúrate de estar asociado a una tienda</p>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredSales.map((sale) => (
+                    <TableRow key={sale.id} className="hover:bg-muted/50 transition-colors border-b">
+                      <TableCell className="font-mono text-xs sm:text-sm font-semibold">
+                        {sale.invoiceNumber || `V-${sale.id}`}
+                      </TableCell>
+                      <TableCell className="font-medium">{sale.client?.fullName || "Cliente general"}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {new Date(sale.createdAt).toLocaleString("es-ES")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={sale.isCredit ? "outline" : "default"}
+                          className={sale.isCredit ? "border-amber-500 text-amber-700 dark:text-amber-400" : ""}
+                        >
+                          {sale.isCredit ? "Fiado" : "Contado"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-base sm:text-lg text-primary">
+                        {formatCurrency(Number(sale.total))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setSelectedSale(sale)}
+                            className="hover:bg-primary/10 hover:text-primary transition-all hover:scale-110"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {isAdmin && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={async () => {
+                                if (confirm(`¿Estás seguro de eliminar la venta ${sale.invoiceNumber}?`)) {
+                                  try {
+                                    await deleteSale(sale.id);
+                                    // Recargar las ventas después de eliminar
+                                    await loadFilteredSales();
+                                    alert("Venta eliminada exitosamente");
+                                  } catch (error: any) {
+                                    alert(`Error al eliminar venta: ${error.message || "Error desconocido"}`);
+                                  }
+                                }
+                              }}
+                              className="hover:bg-destructive/10 hover:text-destructive transition-all hover:scale-110"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -360,7 +367,7 @@ export function SalesHistory() {
                 {selectedSale.profit && (
                   <div>
                     <p className="text-sm text-muted-foreground">Ganancia</p>
-                    <p className="font-medium text-green-600">${Number(selectedSale.profit).toFixed(2)}</p>
+                    <p className="font-medium text-green-600">{formatCurrency(Number(selectedSale.profit))}</p>
                   </div>
                 )}
               </div>
@@ -382,8 +389,8 @@ export function SalesHistory() {
                         <TableRow key={index}>
                           <TableCell>{item.product?.name || `Producto ${item.productId}`}</TableCell>
                           <TableCell className="text-center">{item.quantity}</TableCell>
-                          <TableCell className="text-right">${Number(item.unitPrice).toFixed(2)}</TableCell>
-                          <TableCell className="text-right">${Number(item.subtotal).toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(Number(item.unitPrice))}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(Number(item.subtotal))}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -392,9 +399,9 @@ export function SalesHistory() {
               )}
 
               <div className="space-y-2 rounded-lg border p-4">
-                <div className="flex justify-between border-t pt-2">
+                <div className="flex flex-col gap-2 border-t pt-2 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-lg font-semibold">Total</span>
-                  <span className="text-xl font-bold">${Number(selectedSale.total).toFixed(2)}</span>
+                  <span className="text-xl font-bold">{formatCurrency(Number(selectedSale.total))}</span>
                 </div>
                 {selectedSale.notes && (
                   <div className="mt-2 pt-2 border-t">

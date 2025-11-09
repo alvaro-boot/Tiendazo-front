@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Edit3, Trash2, Users, DollarSign, ArrowLeft, ArrowRight, Sparkles } from "lucide-react"
 import { ClientDialog } from "@/components/clients/client-dialog"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 
 export default function ClientsPage() {
   const { user } = useAuthContext()
@@ -24,15 +24,6 @@ export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        maximumFractionDigits: 0,
-      }),
-    [],
-  )
 
   // Actualizar datos de deuda cuando se actualiza un cliente
   useEffect(() => {
@@ -93,14 +84,14 @@ export default function ClientsPage() {
         key: "totalDebt",
         title: "Deuda total",
         tag: "Finanzas",
-        value: currencyFormatter.format(totalDebt),
+        value: formatCurrency(totalDebt),
         description: "Deuda acumulada",
         icon: DollarSign,
         valueClass: "text-[#ff8a8a] drop-shadow-[0_12px_40px_rgba(255,105,105,0.32)]",
         alert: true,
       },
     ],
-    [totalClients, clientsWithDebt, currencyFormatter, totalDebt],
+    [totalClients, clientsWithDebt, totalDebt],
   )
 
   const handleEdit = (client: Client) => {
@@ -139,7 +130,7 @@ export default function ClientsPage() {
     <div className="space-y-10 animate-in fade-in duration-500">
       {/* Header */}
       <div
-        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b"
+        className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b"
         style={{ borderBottomColor: "var(--glass-border)" }}
       >
         <div className="space-y-3">
@@ -148,16 +139,16 @@ export default function ClientsPage() {
           </span>
           <div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary-foreground/90 to-accent bg-clip-text text-transparent drop-shadow-[0_20px_50px_rgba(90,130,255,0.28)]">
-            Clientes
+              Clientes
             </h1>
-            <p className="text-sm sm:text-base text-muted-foreground/80 mt-3 max-w-lg">
-              Administra tu ecosistema de clientes, monitorea deudas y mantén tu comunicación al día con estilo Prisma.
+            <p className="text-sm sm:text-base text-muted-foreground/80 mt-3 max-w-2xl">
+              Administra tu ecosistema de clientes, monitorea deudas y mantén tu comunicación al día desde cualquier dispositivo.
             </p>
           </div>
         </div>
         <Button
           onClick={handleAddNew}
-          className="w-full sm:w-auto rounded-full border border-primary/25 bg-gradient-to-r from-primary/85 via-secondary/70 to-accent/60 px-6 py-6 text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground shadow-[0_18px_55px_rgba(90,140,255,0.35)] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_24px_65px_rgba(90,140,255,0.45)]"
+          className="w-full sm:w-auto rounded-full border border-primary/25 bg-gradient-to-r from-primary/85 via-secondary/70 to-accent/60 px-6 py-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-primary-foreground shadow-[0_18px_55px_rgba(90,140,255,0.35)] transition-all duration-500 hover:translate-y-[-2px] hover:shadow-[0_24px_65px_rgba(90,140,255,0.45)]"
         >
           <Plus className="mr-2 h-4 w-4" />
           Nuevo Cliente
@@ -165,7 +156,7 @@ export default function ClientsPage() {
       </div>
 
       {/* Cards de estadísticas */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
@@ -192,7 +183,7 @@ export default function ClientsPage() {
                 </span>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className={cn("text-4xl sm:text-5xl font-extrabold tracking-tight", stat.valueClass)}>{stat.value}</p>
+                <p className={cn("text-3xl sm:text-5xl font-extrabold tracking-tight", stat.valueClass)}>{stat.value}</p>
                 <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground/75">{stat.description}</p>
               </CardContent>
             </Card>
@@ -235,7 +226,7 @@ export default function ClientsPage() {
         </CardHeader>
         <CardContent className="px-0 pb-0">
           <div className="overflow-x-auto px-4">
-            <Table className="prisma-table">
+            <Table className="prisma-table min-w-full">
               <TableHeader>
                 <TableRow className="prisma-table-head-row">
                   <TableHead className="min-w-[180px] text-xs uppercase tracking-[0.35em] text-muted-foreground">
@@ -287,7 +278,7 @@ export default function ClientsPage() {
                         {client.address || "-"}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
                           <Button
                             type="button"
                             variant="ghost"
