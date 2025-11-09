@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
 import { DollarSign, Calendar, User, Phone, Mail, ShoppingCart } from "lucide-react"
+import { formatCurrency } from "@/lib/utils"
 
 interface DebtDetailDialogProps {
   client: Client | null
@@ -172,15 +173,15 @@ export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialo
               <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Deuda Actual</p>
-                  <p className="text-3xl font-bold text-red-600">${clientDebt.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-red-600">{formatCurrency(clientDebt)}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Total de Ventas Fiadas</p>
-                  <p className="text-3xl font-bold text-blue-600">${totalFromSales.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-blue-600">{formatCurrency(totalFromSales)}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Total Pagado</p>
-                  <p className="text-3xl font-bold text-green-600">${totalPaid.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground font-medium">Pagos Registrados</p>
@@ -230,10 +231,10 @@ export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialo
                             {new Date(sale.createdAt).toLocaleDateString("es-ES")}
                           </TableCell>
                           <TableCell className="text-right font-semibold text-red-600">
-                            ${saleTotal.toFixed(2)}
+                            {formatCurrency(saleTotal)}
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground">
-                            ${saleProfit.toFixed(2)}
+                            {formatCurrency(saleProfit)}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {sale.details?.length || 0} {sale.details?.length === 1 ? "producto" : "productos"}
@@ -285,13 +286,13 @@ export function DebtDetailDialog({ client, open, onOpenChange }: DebtDetailDialo
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-semibold text-green-600">
-                          ${Number(payment.amount || 0).toFixed(2)}
+                          {formatCurrency(Number(payment.amount || 0))}
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground">
-                          ${Number(payment.previousDebt || 0).toFixed(2)}
+                          {formatCurrency(Number(payment.previousDebt || 0))}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-red-600">
-                          ${Number(payment.newDebt || 0).toFixed(2)}
+                          {formatCurrency(Number(payment.newDebt || 0))}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {payment.reference || "-"}

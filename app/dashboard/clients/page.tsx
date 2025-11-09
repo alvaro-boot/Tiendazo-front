@@ -273,7 +273,7 @@ export default function ClientsPage() {
                           <p className="text-base font-semibold tracking-tight text-foreground/90">{client.fullName}</p>
                           <p className="text-xs text-muted-foreground sm:hidden">{client.phone}</p>
                           {client.email && (
-                            <Badge className="prisma-badge px-4 py-1 text-[0.6rem] tracking-[0.3em] text-muted-foreground">
+                            <Badge className="max-w-[240px] truncate rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-primary/80">
                               {client.email}
                             </Badge>
                           )}
