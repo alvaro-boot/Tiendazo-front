@@ -10,7 +10,6 @@ import {
   Users,
   FileText,
   Settings,
-  Store,
   BarChart3,
   UserPlus,
   ShoppingBag,
@@ -38,12 +37,17 @@ export function Sidebar() {
   return (
     <div className="flex h-full w-64 flex-col border-r border-border/50 bg-gradient-to-b from-card via-card/98 to-card/95 backdrop-blur-sm shadow-soft">
       <div className="flex h-16 items-center gap-3 border-b border-border/50 px-6 bg-gradient-to-r from-primary/8 via-primary/5 to-transparent">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-200 hover:scale-105">
-          <Store className="h-5 w-5" />
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 hover:scale-105">
+          <div
+            className="h-full w-full rounded-[20%] bg-gradient-to-br from-[#06e7ff] via-[#2d5bff] to-[#ff3fd6] shadow-lg shadow-primary/25 [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]"
+            aria-hidden="true"
+          />
         </div>
         <div className="flex flex-col">
-          <span className="text-base font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Tiendazo</span>
-          <span className="text-xs text-muted-foreground font-medium">Panel</span>
+          <span className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+            Prisma Commerce
+          </span>
+          <span className="text-xs text-muted-foreground font-medium">Panel administrativo</span>
         </div>
       </div>
 

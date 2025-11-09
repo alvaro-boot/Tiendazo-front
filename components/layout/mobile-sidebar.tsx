@@ -10,7 +10,6 @@ import {
   Users,
   FileText,
   Settings,
-  Store,
   BarChart3,
   UserPlus,
   X,
@@ -52,12 +51,17 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
         <div className="flex h-full w-full flex-col border-r bg-gradient-to-b from-card to-card/95 backdrop-blur-sm">
           <div className="flex h-16 items-center justify-between gap-3 border-b px-6 bg-gradient-to-r from-primary/5 to-transparent">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
-                <Store className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg shadow-lg">
+                <div
+                  className="h-full w-full rounded-[20%] bg-gradient-to-br from-[#06e7ff] via-[#2d5bff] to-[#ff3fd6] shadow-primary/25 [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]"
+                  aria-hidden="true"
+                />
               </div>
               <div className="flex flex-col">
-                <span className="text-base font-bold tracking-tight">Tiendazo</span>
-                <span className="text-xs text-muted-foreground">Panel</span>
+                <span className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                  Prisma Commerce
+                </span>
+                <span className="text-xs text-muted-foreground">Panel administrativo</span>
               </div>
             </div>
             <button

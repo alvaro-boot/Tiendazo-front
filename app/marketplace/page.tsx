@@ -116,10 +116,10 @@ export default function MarketplacePage() {
               <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
                 <Store className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <span className="text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent hidden sm:inline">
-                Tiendazo Marketplace
+              <span className="text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent hidden sm:inline">
+                Prisma Commerce Marketplace
               </span>
-              <span className="text-sm sm:hidden font-bold">Tiendazo</span>
+              <span className="text-sm sm:hidden font-bold">Prisma</span>
             </Link>
             <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
               <Link href="/marketplace/cart">
@@ -152,11 +152,11 @@ export default function MarketplacePage() {
       {/* Hero Section */}
       <section className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 lg:py-12">
         <div className="text-center mb-6 sm:mb-8 lg:mb-12">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent px-2">
-            Descubre las Mejores Tiendas
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent px-2">
+            Bienvenido a Prisma Commerce
           </h1>
           <p className="text-sm sm:text-base lg:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
-            Explora productos únicos de tiendas locales y encuentra lo que necesitas
+            Explora productos únicos de tiendas locales y lleva tu marca a un siguiente nivel digital.
           </p>
         </div>
 
@@ -323,7 +323,7 @@ export default function MarketplacePage() {
       <footer className="border-t border-border/50 bg-card/50 mt-20">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center text-sm text-muted-foreground">
-            <p>© 2024 Tiendazo. Todos los derechos reservados.</p>
+            <p>© 2024 Prisma Commerce. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

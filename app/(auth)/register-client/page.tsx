@@ -24,8 +24,8 @@ export default function RegisterClientPage() {
             <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground shadow-2xl shadow-primary/30 group-hover:shadow-primary/40 transition-all duration-300">
               <Store className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
-            <span className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-              Tiendazo Marketplace
+            <span className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+              Prisma Commerce Marketplace
             </span>
           </Link>
         </div>

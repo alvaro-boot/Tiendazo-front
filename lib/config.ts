@@ -10,7 +10,7 @@ export const config = {
     "https://https-github-com-alvaro-boot-tiendazo-api.onrender.com/api/docs",
 
   // Configuración de la aplicación
-  APP_NAME: "Tiendazo",
+  APP_NAME: "Prisma Commerce",
   APP_VERSION: "1.0.0",
 
   // Configuración de autenticación

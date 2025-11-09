@@ -16,11 +16,11 @@ export default function LoginPage() {
                 <Store className="h-8 w-8" />
               </div>
             </div>
-            <h1 className="text-5xl font-bold text-balance mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-              Tiendazo
+            <h1 className="text-5xl font-bold text-balance mb-2 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+              Prisma Commerce
             </h1>
             <p className="text-lg text-muted-foreground">
-              Sistema de Gestión de Tiendas
+              Plataforma integral para tu ecosistema de tiendas
             </p>
           </div>
           <LoginForm />

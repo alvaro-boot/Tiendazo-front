@@ -56,7 +56,7 @@ export function LoginForm() {
         <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-2">
           {error && (
             <div className="p-3 text-sm text-destructive-foreground bg-destructive/10 border border-destructive rounded-md">
               {error}
@@ -84,7 +84,7 @@ export function LoginForm() {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter className="flex flex-col gap-4 pt-2">
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>

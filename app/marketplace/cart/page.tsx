@@ -48,8 +48,8 @@ export default function CartPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
                 <Store className="h-5 w-5" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                Tiendazo Marketplace
+              <span className="text-xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                Prisma Commerce Marketplace
               </span>
             </Link>
           </div>
@@ -85,10 +85,10 @@ export default function CartPage() {
               <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25">
                 <Store className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <span className="text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent hidden sm:inline">
-                Tiendazo Marketplace
+              <span className="text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent hidden sm:inline">
+                Prisma Commerce Marketplace
               </span>
-              <span className="text-sm sm:hidden font-bold">Tiendazo</span>
+              <span className="text-sm sm:hidden font-bold">Prisma</span>
             </Link>
             <Link href="/marketplace">
               <Button variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">

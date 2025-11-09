@@ -66,7 +66,9 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-balance mb-2">Tiendazo</h1>
+          <h1 className="text-4xl font-bold text-balance mb-2 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+            Prisma Commerce
+          </h1>
           <p className="text-muted-foreground">
             {isAdmin 
               ? "Registro de Administrador - Registrar nuevo administrador"

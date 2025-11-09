@@ -1,4 +1,4 @@
-# 💰 Configuración de Moneda y Impuestos - Tiendazo
+# 💰 Configuración de Moneda y Impuestos - Prisma Commerce
 
 ## 📋 Resumen de Cambios
 

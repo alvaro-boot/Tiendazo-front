@@ -59,7 +59,7 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const { addItem, getCartItemsCount } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
 
   useEffect(() => {

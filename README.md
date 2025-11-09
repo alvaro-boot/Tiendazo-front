@@ -1,6 +1,6 @@
-# 🏪 Tiendazo Frontend - Integración con API de Producción
+# 🛍️ Prisma Commerce Frontend - Integración con API de Producción
 
-Este proyecto es un frontend Next.js completamente integrado con la API Tiendazo para la gestión de tiendas, productos, clientes y ventas.
+Este proyecto es un frontend Next.js completamente integrado con la API Prisma Commerce para la gestión de tiendas, productos, clientes y ventas.
 
 ## 🚀 Configuración Inicial
 
@@ -255,4 +255,4 @@ pnpm update
 
 ---
 
-**¡Disfruta usando Tiendazo! 🎉**
+**¡Disfruta usando Prisma Commerce! 🎉**

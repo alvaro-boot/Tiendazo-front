@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Store, BadgeCheck, Menu, ShoppingBag } from "lucide-react";
+import { User, LogOut, BadgeCheck, Menu, ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -44,12 +44,15 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
         
-        <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-primary/30">
-          <Store className="h-5 w-5 sm:h-6 sm:w-6" />
+        <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-primary/30">
+          <div className="h-full w-full rounded-[20%] bg-gradient-to-br from-[#06e7ff] via-[#2d5bff] to-[#ff3fd6] shadow-lg shadow-primary/25 [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]" aria-hidden="true" />
+          <span className="sr-only">Prisma Commerce</span>
         </div>
         <div className="hidden sm:flex flex-col">
-          <span className="text-base sm:text-lg font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Tiendazo</span>
-          <span className="text-xs text-muted-foreground font-medium">Sistema de Gestión</span>
+          <span className="text-base sm:text-lg font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+            Prisma Commerce
+          </span>
+          <span className="text-xs text-muted-foreground font-medium">Comercio multitienda conectado</span>
         </div>
       </div>
 

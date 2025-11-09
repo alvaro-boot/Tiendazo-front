@@ -11,8 +11,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tiendazo - Sistema de Gestión de Tiendas",
-  description: "Sistema completo de gestión para tu tienda",
+  title: "Prisma Commerce - Plataforma de Comercio Multitienda",
+  description: "Gestiona y personaliza tus tiendas físicas y en línea con Prisma Commerce.",
   generator: "v0.app",
 };
 
@@ -23,16 +23,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <body className="font-sans antialiased bg-[var(--background)] text-[var(--foreground)]">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>{children}</AuthProvider>
+          <div className="prisma-shell">
+            <div className="prisma-shell__gradient" aria-hidden="true" />
+            <div className="prisma-shell__particles" aria-hidden="true" />
+            <div className="prisma-shell__overlay" aria-hidden="true" />
+            <div className="prisma-shell__content">
+              <AuthProvider>{children}</AuthProvider>
+            </div>
+            <Toaster />
+          </div>
         </ThemeProvider>
-        <Toaster />
         <Analytics />
       </body>
     </html>
