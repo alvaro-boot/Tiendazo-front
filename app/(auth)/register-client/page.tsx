@@ -25,7 +25,7 @@ export default function RegisterClientPage() {
               <Store className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
             <span className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-              Prisma Commerce Marketplace
+              Prisma Commerce Sitio Web
             </span>
           </Link>
         </div>

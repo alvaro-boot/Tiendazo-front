@@ -19,7 +19,7 @@ import {
 import { useAuthContext } from "@/lib/auth-context";
 import { storeService } from "@/lib/services";
 import { config } from "@/lib/config";
-import { Building2, User } from "lucide-react";
+import { Building2, User, Globe } from "lucide-react";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -305,82 +305,48 @@ export function RegisterForm() {
               </div>
             </div>
 
-            {/* Configuración de Marketplace */}
-            <div className="space-y-4 border-t pt-4">
-              <h4 className="text-md font-medium text-muted-foreground">
-                Configuración de Marketplace
-              </h4>
-
+            {/* Configuración del sitio web público */}
+            <div className="space-y-6 rounded-2xl border-2 bg-card/75 p-6 shadow-lg">
               <div className="space-y-2">
-                <Label htmlFor="storeType">Tipo de Tienda</Label>
-                <select
-                  id="storeType"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={storeType}
-                  onChange={(e) => {
-                    const newType = e.target.value as "INTERNAL" | "PUBLIC";
-                    setStoreType(newType);
-                    if (newType === "INTERNAL") {
-                      setIsPublic(false);
-                    }
-                  }}
-                >
-                  <option value="INTERNAL">POS - Solo ventas internas</option>
-                  <option value="PUBLIC">Marketplace - Venta online pública</option>
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  {storeType === "INTERNAL" 
-                    ? "Solo para ventas en el punto de venta físico"
-                    : "Tu tienda aparecerá en el marketplace público y podrás vender online"}
+                <h3 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" /> Configuración del Sitio Web
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Define si tu tienda tendrá un sitio web público generado automáticamente
                 </p>
               </div>
-
-              {storeType === "PUBLIC" && (
-                <>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="isPublic"
-                        checked={isPublic}
-                        onChange={(e) => setIsPublic(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      <Label htmlFor="isPublic" className="cursor-pointer">
-                        Hacer visible públicamente en el marketplace
-                      </Label>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Si está activado, tu tienda aparecerá en la lista de tiendas públicas del marketplace
-                    </p>
-                  </div>
-
-                  {isPublic && (
-                    <div className="space-y-2">
-                      <Label htmlFor="storeSlug">URL de la Tienda (Slug)</Label>
-                      <Input
-                        id="storeSlug"
-                        type="text"
-                        placeholder="mi-tienda"
-                        value={storeSlug}
-                        onChange={(e) => {
-                          // Convertir a slug: solo letras, números y guiones
-                          const slug = e.target.value
-                            .toLowerCase()
-                            .replace(/[^a-z0-9-]/g, "-")
-                            .replace(/-+/g, "-")
-                            .replace(/^-|-$/g, "");
-                          setStoreSlug(slug);
-                        }}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        URL amigable para tu tienda. Si no lo llenas, se generará automáticamente.
-                        Ejemplo: marketplace.com/tienda/{storeSlug || "mi-tienda"}
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="store-type">Tipo de tienda</Label>
+                  <select
+                    id="store-type"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={storeType}
+                    onChange={(e) => {
+                      const newType = e.target.value as "INTERNAL" | "PUBLIC";
+                      setStoreType(newType);
+                      if (newType === "INTERNAL") {
+                        setIsPublic(false);
+                      }
+                    }}
+                  >
+                    <option value="INTERNAL">POS - Solo ventas internas</option>
+                    <option value="PUBLIC">Sitio web público</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="store-is-public"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="store-is-public" className="text-sm">
+                    Hacer visible el sitio web público
+                  </Label>
+                </div>
+              </div>
             </div>
 
             {/* Configuración de moneda */}

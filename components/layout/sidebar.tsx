@@ -12,7 +12,6 @@ import {
   Settings,
   BarChart3,
   UserPlus,
-  ShoppingBag,
 } from "lucide-react";
 import { useAuthContext } from "@/lib/auth-context";
 
@@ -123,21 +122,6 @@ export function Sidebar() {
             </Link>
           </>
         )}
-        
-        {/* Enlace al Marketplace */}
-        <div className="my-4 h-px bg-border/50" />
-        <Link
-          href="/marketplace"
-          target="_blank"
-          rel="noreferrer"
-          className="prisma-nav-link prisma-nav-link--compact group font-medium tracking-[0.08em] hover:text-foreground/90"
-          title="Marketplace"
-        >
-          <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
-            <ShoppingBag className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-          </span>
-          <span className="prisma-nav-link__label">Marketplace</span>
-        </Link>
       </nav>
     </div>
   );

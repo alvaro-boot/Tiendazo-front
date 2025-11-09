@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useForm } from "react-hook-form"
+import { Globe } from "lucide-react"
 
 interface ProductDialogProps {
   product: Product | null
@@ -250,8 +251,8 @@ export function ProductDialog({ product, open, onOpenChange }: ProductDialogProp
                 className="mt-1"
               />
               <div className="flex-1 space-y-1">
-                <Label htmlFor="isPublic" className="font-semibold cursor-pointer text-base">
-                  Producto Público (Visible en Marketplace)
+                <Label htmlFor="isPublic" className="font-semibold flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" /> Producto público (visible en el sitio web)
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   Si está marcado, este producto será visible en el marketplace público de tu tienda y podrá ser comprado por clientes

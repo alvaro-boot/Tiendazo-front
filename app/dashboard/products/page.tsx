@@ -143,7 +143,7 @@ export default function ProductsPage() {
                 <TableHead className="text-right hidden lg:table-cell min-w-[100px]">Precio Compra</TableHead>
                 <TableHead className="text-right min-w-[80px]">Stock</TableHead>
                 <TableHead className="hidden md:table-cell min-w-[100px]">Estado</TableHead>
-                <TableHead className="hidden lg:table-cell min-w-[110px]">Marketplace</TableHead>
+                <TableHead className="hidden lg:table-cell min-w-[110px]">Sitio Web</TableHead>
                 <TableHead className="text-right min-w-[120px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -183,13 +183,9 @@ export default function ProductsPage() {
                       <Badge variant={stockStatus.variant}>{stockStatus.label}</Badge>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {product.isPublic ? (
-                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                          Público
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Privado</Badge>
-                      )}
+                      <Badge variant={product.isPublic ? "default" : "secondary"}>
+                        {product.isPublic ? "Publicado" : "Oculto"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

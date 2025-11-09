@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   CheckCircle,
   LogIn,
-  ShoppingBag,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -189,17 +188,6 @@ export function Dashboard() {
                 </Button>
               </Link>
             )}
-            <Link href="/marketplace" target="_blank">
-              <Button
-                variant="outline"
-                className="group w-full h-24 flex flex-col gap-3 border-2 transition-all duration-300 hover:border-primary hover:shadow-lg hover:scale-105 hover:bg-primary/5"
-              >
-                <div className="rounded-full bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
-                  <ShoppingBag className="h-6 w-6 text-primary" />
-                </div>
-                <span className="font-semibold">Marketplace</span>
-              </Button>
-            </Link>
           </div>
         </CardContent>
       </Card>

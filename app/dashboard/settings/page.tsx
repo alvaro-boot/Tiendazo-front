@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
-import { Store, User, ShoppingBag, Globe, Settings as SettingsIcon } from "lucide-react";
+import { Store, User, Globe, Settings as SettingsIcon } from "lucide-react";
 
 interface StoreFormData {
   name: string;
@@ -282,11 +282,11 @@ export default function SettingsPage() {
         <Card className="border-2 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-primary" />
-              Configuración de Marketplace
+              <Globe className="h-5 w-5 text-primary" />
+              Configuración del Sitio Web
             </CardTitle>
             <CardDescription>
-              Activa o desactiva el acceso al marketplace público
+              Activa o desactiva la página web pública generada por el sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -309,12 +309,12 @@ export default function SettingsPage() {
                   }}
                 >
                   <option value="INTERNAL">POS - Solo ventas internas</option>
-                  <option value="PUBLIC">Marketplace - Venta online pública</option>
+                  <option value="PUBLIC">Sitio web público</option>
                 </select>
                 <p className="text-xs text-muted-foreground">
                   {storeType === "INTERNAL"
                     ? "Solo para ventas en el punto de venta físico"
-                    : "Tu tienda aparecerá en el marketplace público y podrás vender online"}
+                    : "Tu tienda tendrá un sitio web público para vender en línea"}
                 </p>
               </div>
 
@@ -330,11 +330,11 @@ export default function SettingsPage() {
                         className="h-4 w-4 rounded border-gray-300"
                       />
                       <Label htmlFor="is-public" className="cursor-pointer">
-                        Hacer visible públicamente en el marketplace
+                        Hacer visible públicamente el sitio web de la tienda
                       </Label>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Si está activado, tu tienda aparecerá en la lista de tiendas públicas del marketplace
+                      Si está activado, el sitio web generado será accesible para tus clientes.
                     </p>
                   </div>
 
@@ -359,7 +359,7 @@ export default function SettingsPage() {
                       <p className="text-xs text-muted-foreground">
                         URL amigable para tu tienda. Si no lo llenas, se generará automáticamente.
                         <br />
-                        Ejemplo: marketplace.com/tienda/{storeForm.watch("slug") || "mi-tienda"}
+                        Ejemplo: tiendaonline.com/{storeForm.watch("slug") || "mi-tienda"}
                       </p>
                       {storeForm.watch("slug") && (
                         <div className="mt-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
@@ -367,7 +367,7 @@ export default function SettingsPage() {
                             <Globe className="h-4 w-4 text-primary" />
                             <span className="font-medium">URL de tu tienda:</span>
                             <code className="text-xs bg-background px-2 py-1 rounded">
-                              /marketplace/tienda/{storeForm.watch("slug")}
+                              /tiendas/{storeForm.watch("slug")}
                             </code>
                           </div>
                         </div>
@@ -378,7 +378,7 @@ export default function SettingsPage() {
               )}
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Guardando..." : "Guardar Configuración de Marketplace"}
+                {loading ? "Guardando..." : "Guardar configuración del sitio web"}
               </Button>
             </form>
           </CardContent>

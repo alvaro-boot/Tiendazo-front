@@ -111,7 +111,7 @@ export default function ClientInvoicesPage() {
                 Aún no tienes facturas disponibles
               </p>
               <Link href="/marketplace">
-                <Button>Ir al Marketplace</Button>
+                <Button>Ir al sitio web de la tienda</Button>
               </Link>
             </CardContent>
           </Card>

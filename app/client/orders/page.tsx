@@ -160,7 +160,7 @@ function ClientOrdersContent() {
                 Aún no has realizado ningún pedido
               </p>
               <Link href="/marketplace">
-                <Button>Ir al Marketplace</Button>
+                <Button>Ir al sitio web de la tienda</Button>
               </Link>
             </CardContent>
           </Card>

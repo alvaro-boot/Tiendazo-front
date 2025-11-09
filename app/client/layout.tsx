@@ -13,7 +13,7 @@ export default function ClientLayout({
 }) {
   const pathname = usePathname();
 
-  const navigation = [
+  const clientNavigation = [
     { name: "Mis Pedidos", href: "/client/orders", icon: Package },
     { name: "Mis Facturas", href: "/client/invoices", icon: FileText },
     { name: "Mi Perfil", href: "/client/profile", icon: User },
@@ -34,7 +34,7 @@ export default function ClientLayout({
               <span className="text-sm sm:hidden font-bold">Cliente</span>
             </Link>
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap sm:flex-nowrap">
-              {navigation.map((item) => {
+              {clientNavigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link key={item.href} href={item.href} className="flex-shrink-0">
@@ -53,12 +53,6 @@ export default function ClientLayout({
                   </Link>
                 );
               })}
-              <Link href="/marketplace" className="flex-shrink-0 hidden md:block">
-                <Button variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm">
-                  <span className="hidden lg:inline">Volver al Marketplace</span>
-                  <span className="lg:hidden">Marketplace</span>
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
