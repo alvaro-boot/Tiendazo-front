@@ -65,11 +65,15 @@ export const currency = {
         style: "currency",
         currency: currency,
         minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 0,
       }).format(amount);
     } catch (error) {
       // Fallback si hay error con el formato
-      return `${config.CURRENCY_SYMBOL}${amount.toLocaleString()}`;
+      const numericAmount = Number.isFinite(amount) ? amount : 0;
+      return `${config.CURRENCY_SYMBOL}${numericAmount.toLocaleString(config.CURRENCY_FORMAT, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}`;
     }
   },
 

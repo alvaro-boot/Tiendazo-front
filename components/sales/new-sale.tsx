@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useAuthContext } from "@/lib/auth-context";
 import { useClients, useSales } from "@/hooks/use-api";
 import { productService } from "@/lib/services";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,10 +50,7 @@ interface CartItem {
   subtotal: number;
 }
 
-const formatPrice = (value: number) =>
-  `$${Math.round(value * 100)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+const formatPrice = (value: number) => formatCurrency(value);
 
 export function NewSale() {
   const { user } = useAuthContext();

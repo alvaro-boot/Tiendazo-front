@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { orderService, Order } from "@/lib/services";
+import { formatCurrency } from "@/lib/utils";
 
 function ClientOrdersContent() {
   const searchParams = useSearchParams();
@@ -53,18 +54,7 @@ function ClientOrdersContent() {
     }
   };
 
-  const formatPrice = (price: number): string => {
-    const rounded = Math.round(price * 100) / 100;
-    const parts = rounded.toString().split(".");
-    const integerPart = parts[0];
-    const decimalPart = parts[1] || "";
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    if (decimalPart && decimalPart !== "00" && decimalPart !== "0") {
-      const formattedDecimal = decimalPart.padEnd(2, "0").substring(0, 2);
-      return `$${formattedInteger},${formattedDecimal}`;
-    }
-    return `$${formattedInteger}`;
-  };
+  const formatPrice = (price: number): string => formatCurrency(price);
 
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {

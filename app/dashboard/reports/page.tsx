@@ -5,33 +5,10 @@ import { useSales } from "@/hooks/use-api"
 import { useDebts } from "@/hooks/use-debts"
 import { useAuthContext } from "@/lib/auth-context"
 import { saleService, debtService } from "@/lib/services"
+import { formatCurrency } from "@/lib/utils"
 
 // Función para formatear precios con separadores de miles (formato colombiano)
-const formatPrice = (price: number): string => {
-  if (!price || isNaN(price)) return "$0"
-  
-  // Redondear a 2 decimales si es necesario
-  const rounded = Math.round(price * 100) / 100
-  
-  // Separar parte entera y decimal
-  const parts = rounded.toString().split('.')
-  const integerPart = parts[0]
-  const decimalPart = parts[1] || ''
-  
-  // Agregar separadores de miles (punto como separador de miles)
-  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-  
-  // Si tiene decimales significativos (no es .00), mostrarlos con coma
-  // Si los decimales son "00" o no existen, no mostrarlos
-  if (decimalPart && decimalPart !== '00' && decimalPart !== '0') {
-    // Asegurar que tenga 2 dígitos
-    const formattedDecimal = decimalPart.padEnd(2, '0').substring(0, 2)
-    return `$${formattedInteger},${formattedDecimal}`
-  }
-  
-  // Si no tiene decimales o es .00, mostrar solo la parte entera
-  return `$${formattedInteger}`
-}
+const formatPrice = (price: number): string => formatCurrency(price)
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

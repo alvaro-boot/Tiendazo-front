@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/hooks/use-cart";
+import { formatCurrency } from "@/lib/utils";
 
 export default function CartPage() {
   const router = useRouter();
@@ -17,18 +18,7 @@ export default function CartPage() {
   const allItems = getCartItems();
   const stores = Array.from(new Set(allItems.map((item) => item.storeSlug)));
 
-  const formatPrice = (price: number): string => {
-    const rounded = Math.round(price * 100) / 100;
-    const parts = rounded.toString().split(".");
-    const integerPart = parts[0];
-    const decimalPart = parts[1] || "";
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    if (decimalPart && decimalPart !== "00" && decimalPart !== "0") {
-      const formattedDecimal = decimalPart.padEnd(2, "0").substring(0, 2);
-      return `$${formattedInteger},${formattedDecimal}`;
-    }
-    return `$${formattedInteger}`;
-  };
+  const formatPrice = (price: number): string => formatCurrency(price);
 
   const handleCheckout = (storeSlug: string) => {
     router.push(`/marketplace/checkout?store=${storeSlug}`);

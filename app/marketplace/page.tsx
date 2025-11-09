@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { marketplaceService } from "@/lib/services";
+import { formatCurrency } from "@/lib/utils";
 
 interface PublicStore {
   id: number;
@@ -93,18 +94,7 @@ export default function MarketplacePage() {
     store.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatPrice = (price: number): string => {
-    const rounded = Math.round(price * 100) / 100;
-    const parts = rounded.toString().split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts[1] || '';
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    if (decimalPart && decimalPart !== '00' && decimalPart !== '0') {
-      const formattedDecimal = decimalPart.padEnd(2, '0').substring(0, 2);
-      return `$${formattedInteger},${formattedDecimal}`;
-    }
-    return `$${formattedInteger}`;
-  };
+  const formatPrice = (price: number): string => formatCurrency(price);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
