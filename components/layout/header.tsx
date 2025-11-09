@@ -32,7 +32,14 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border/50 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/70 px-4 sm:px-6 shadow-soft">
+    <header
+      className="sticky top-0 z-50 flex h-16 items-center justify-between border-b px-4 sm:px-6 shadow-soft"
+      style={{
+        background: 'var(--glass-strong)',
+        borderBottomColor: 'var(--glass-border)',
+        backdropFilter: 'blur(26px)',
+      }}
+    >
       <div className="flex items-center gap-3 sm:gap-4">
         {/* Botón menú hamburguesa para móvil */}
         <Button
@@ -58,13 +65,29 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       <div className="flex items-center gap-2 sm:gap-3">
         <Link href="/marketplace" target="_blank">
-          <Button variant="ghost" size="sm" className="gap-2 rounded-xl hover:bg-accent/50 transition-all duration-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 rounded-xl transition-all duration-300"
+            style={{
+              border: '1px solid var(--glass-border)',
+              background: 'var(--glass)',
+              color: 'var(--foreground)',
+            }}
+          >
             <ShoppingBag className="h-4 w-4" />
             <span className="hidden sm:inline">Marketplace</span>
           </Button>
         </Link>
         <ThemeToggle />
-        <div className="hidden lg:flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-muted/80 to-muted/50 border border-border/50 shadow-soft">
+        <div
+          className="hidden lg:flex items-center gap-2.5 px-4 py-2 rounded-xl shadow-soft"
+          style={{
+            border: '1px solid var(--glass-border)',
+            background: 'linear-gradient(120deg, rgba(255,255,255,0.16), rgba(120,150,255,0.12))',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
           <BadgeCheck className="h-4 w-4 text-primary" />
           <span className="text-sm font-semibold truncate max-w-[150px]">{user?.fullName}</span>
           {user?.role === "ADMIN" && (
@@ -73,7 +96,16 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-2.5 rounded-xl hover:bg-accent/50 transition-all duration-200">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2.5 rounded-xl transition-all duration-300"
+              style={{
+                border: '1px solid var(--glass-border)',
+                background: 'var(--glass)',
+                color: 'var(--foreground)',
+              }}
+            >
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 via-primary/15 to-primary/10 text-primary ring-2 ring-primary/20 shadow-soft transition-all duration-200 hover:ring-primary/30 hover:scale-105">
                 <User className="h-4 w-4" />
               </div>

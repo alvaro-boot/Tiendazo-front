@@ -16,9 +16,12 @@ export default function DashboardLayout({
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="flex h-screen overflow-hidden bg-[var(--bg-gradient)]">
         {/* Sidebar desktop - oculto en móvil */}
-        <aside className="hidden md:flex h-full w-64 flex-col border-r">
+        <aside
+          className="hidden md:flex h-full w-64 flex-col border-r border-border/40 backdrop-blur-2xl"
+          style={{ background: "var(--sidebar)" }}
+        >
           <Sidebar />
         </aside>
         
@@ -28,7 +31,7 @@ export default function DashboardLayout({
         <div className="flex flex-1 flex-col overflow-hidden w-full md:w-auto">
           <Header onMenuClick={() => setMobileMenuOpen(true)} />
           <main className="flex-1 overflow-y-auto bg-transparent p-3 sm:p-4 md:p-6 lg:p-8">
-            <div className="mx-auto max-w-7xl w-full">
+            <div className="mx-auto max-w-7xl w-full space-y-6">
               {children}
             </div>
           </main>

@@ -35,48 +35,43 @@ export function Sidebar() {
   const { isAdmin } = useAuthContext();
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-border/50 bg-gradient-to-b from-card via-card/98 to-card/95 backdrop-blur-sm shadow-soft">
-      <div className="flex h-16 items-center gap-3 border-b border-border/50 px-6 bg-gradient-to-r from-primary/8 via-primary/5 to-transparent">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 hover:scale-105">
+    <div className="flex h-full w-56 flex-col border-r border-border/50 bg-gradient-to-b from-card via-card/98 to-card/95 backdrop-blur-sm shadow-soft">
+      <div className="flex h-14 items-center gap-3 border-b border-border/50 px-5 bg-gradient-to-r from-primary/8 via-primary/5 to-transparent">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 hover:scale-105">
           <div
             className="h-full w-full rounded-[20%] bg-gradient-to-br from-[#06e7ff] via-[#2d5bff] to-[#ff3fd6] shadow-lg shadow-primary/25 [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]"
             aria-hidden="true"
           />
         </div>
         <div className="flex flex-col">
-          <span className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+          <span className="text-sm font-semibold tracking-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
             Prisma Commerce
           </span>
-          <span className="text-xs text-muted-foreground font-medium">Panel administrativo</span>
+          <span className="text-[0.65rem] text-muted-foreground font-medium">Panel administrativo</span>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
+      <nav className="flex-1 space-y-1.5 p-4 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.name}
               href={item.href}
+              title={item.name}
+              aria-current={isActive ? "page" : undefined}
+              data-active={isActive ? "true" : undefined}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-gradient-to-r from-primary via-primary to-primary/95 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02] border border-primary/20"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1 hover:shadow-soft border border-transparent hover:border-border/50"
+                "prisma-nav-link prisma-nav-link--compact group font-medium tracking-[0.08em]",
+                !isActive && "hover:text-foreground/90"
               )}
             >
-              <item.icon className={cn(
-                "h-5 w-5 transition-transform duration-200",
-                isActive ? "scale-110" : "group-hover:scale-110"
-              )} />
-              <span className={cn(
-                "transition-all duration-200",
-                isActive && "font-semibold"
-              )}>
-                {item.name}
+              <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
+                <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
               </span>
+              <span className="prisma-nav-link__label">{item.name}</span>
               {isActive && (
-                <div className="ml-auto h-2 w-2 rounded-full bg-primary-foreground/50 animate-pulse" />
+                <span className="ml-auto h-2 w-2 rounded-full bg-white/70 shadow-[0_0_18px_rgba(255,255,255,0.6)] animate-pulse" />
               )}
             </Link>
           );
@@ -92,25 +87,20 @@ export function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
+                  title={item.name}
+                  aria-current={isActive ? "page" : undefined}
+                  data-active={isActive ? "true" : undefined}
                   className={cn(
-                    "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1 hover:shadow-md"
+                    "prisma-nav-link prisma-nav-link--compact group font-medium tracking-[0.08em]",
+                    !isActive && "hover:text-foreground/90"
                   )}
                 >
-                  <item.icon className={cn(
-                    "h-5 w-5 transition-transform duration-200",
-                    isActive ? "scale-110" : "group-hover:scale-110"
-                  )} />
-                  <span className={cn(
-                    "transition-all duration-200",
-                    isActive && "font-semibold"
-                  )}>
-                    {item.name}
+                  <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
+                    <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   </span>
+                  <span className="prisma-nav-link__label">{item.name}</span>
                   {isActive && (
-                    <div className="ml-auto h-2 w-2 rounded-full bg-primary-foreground/50 animate-pulse" />
+                    <span className="ml-auto h-2 w-2 rounded-full bg-white/70 shadow-[0_0_18px_rgba(255,255,255,0.6)] animate-pulse" />
                   )}
                 </Link>
               );
@@ -118,23 +108,18 @@ export function Sidebar() {
             <div className="my-4 h-px bg-border/50" />
             <Link
               href="/register-employee"
+              title="Registrar Empleado"
+              aria-current={pathname === "/register-employee" ? "page" : undefined}
+              data-active={pathname === "/register-employee" ? "true" : undefined}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                pathname === "/register-employee"
-                  ? "bg-gradient-to-r from-primary via-primary to-primary/95 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02] border border-primary/20"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1 hover:shadow-soft border border-transparent hover:border-border/50"
+                "prisma-nav-link prisma-nav-link--compact group font-medium tracking-[0.08em]",
+                pathname !== "/register-employee" && "hover:text-foreground/90"
               )}
             >
-              <UserPlus className={cn(
-                "h-5 w-5 transition-transform duration-200",
-                pathname === "/register-employee" ? "scale-110" : "group-hover:scale-110"
-              )} />
-              <span className={cn(
-                "transition-all duration-200",
-                pathname === "/register-employee" && "font-semibold"
-              )}>
-                Registrar Empleado
+              <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
+                <UserPlus className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
               </span>
+              <span className="prisma-nav-link__label">Registrar Empleado</span>
             </Link>
           </>
         )}
@@ -144,23 +129,14 @@ export function Sidebar() {
         <Link
           href="/marketplace"
           target="_blank"
-          className={cn(
-            "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-            pathname === "/marketplace"
-              ? "bg-gradient-to-r from-primary via-primary to-primary/95 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02] border border-primary/20"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1 hover:shadow-soft border border-transparent hover:border-border/50"
-          )}
+          rel="noreferrer"
+          className="prisma-nav-link prisma-nav-link--compact group font-medium tracking-[0.08em] hover:text-foreground/90"
+          title="Marketplace"
         >
-          <ShoppingBag className={cn(
-            "h-5 w-5 transition-transform duration-200",
-            pathname === "/marketplace" ? "scale-110" : "group-hover:scale-110"
-          )} />
-          <span className={cn(
-            "transition-all duration-200",
-            pathname === "/marketplace" && "font-semibold"
-          )}>
-            Marketplace
+          <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
+            <ShoppingBag className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
           </span>
+          <span className="prisma-nav-link__label">Marketplace</span>
         </Link>
       </nav>
     </div>

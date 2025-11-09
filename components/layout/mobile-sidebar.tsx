@@ -48,8 +48,18 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-64 p-0">
-        <div className="flex h-full w-full flex-col border-r bg-gradient-to-b from-card to-card/95 backdrop-blur-sm">
-          <div className="flex h-16 items-center justify-between gap-3 border-b px-6 bg-gradient-to-r from-primary/5 to-transparent">
+        <div
+          className="flex h-full w-full flex-col border-r"
+          style={{ background: 'var(--sidebar)', borderColor: 'var(--glass-border)', backdropFilter: 'blur(26px)' }}
+        >
+          <div
+            className="flex h-16 items-center justify-between gap-3 border-b px-6"
+            style={{
+              borderBottomColor: 'var(--glass-border)',
+              background: 'linear-gradient(120deg, rgba(255,255,255,0.12), rgba(120,150,255,0.12))',
+              backdropFilter: 'blur(26px)',
+            }}
+          >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg shadow-lg">
                 <div
@@ -80,25 +90,17 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
                   key={item.name}
                   href={item.href}
                   onClick={() => onOpenChange(false)}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1 hover:shadow-md"
-                  )}
+                  title={item.name}
+                  aria-current={isActive ? "page" : undefined}
+                  data-active={isActive ? "true" : undefined}
+                  className="prisma-nav-link group text-sm font-medium tracking-[0.08em]"
                 >
-                  <item.icon className={cn(
-                    "h-5 w-5 transition-transform duration-200",
-                    isActive ? "scale-110" : "group-hover:scale-110"
-                  )} />
-                  <span className={cn(
-                    "transition-all duration-200",
-                    isActive && "font-semibold"
-                  )}>
-                    {item.name}
+                  <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
+                    <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   </span>
+                  <span className="prisma-nav-link__label">{item.name}</span>
                   {isActive && (
-                    <div className="ml-auto h-2 w-2 rounded-full bg-primary-foreground/50 animate-pulse" />
+                    <span className="ml-auto h-2 w-2 rounded-full bg-white/70 shadow-[0_0_18px_rgba(255,255,255,0.6)] animate-pulse" />
                   )}
                 </Link>
               );
@@ -107,7 +109,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
             {/* Navegación adicional solo para administradores */}
             {isAdmin && (
               <>
-                <div className="my-4 h-px bg-border/50" />
+                <div className="my-4 h-px prisma-divider" />
                 {adminNavigation.map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   return (
@@ -115,50 +117,37 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
                       key={item.name}
                       href={item.href}
                       onClick={() => onOpenChange(false)}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                        isActive
-                          ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
-                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1 hover:shadow-md"
-                      )}
+                      title={item.name}
+                      aria-current={isActive ? "page" : undefined}
+                      data-active={isActive ? "true" : undefined}
+                      className="prisma-nav-link group text-sm font-medium tracking-[0.08em]"
                     >
-                      <item.icon className={cn(
-                        "h-5 w-5 transition-transform duration-200",
-                        isActive ? "scale-110" : "group-hover:scale-110"
-                      )} />
-                      <span className={cn(
-                        "transition-all duration-200",
-                        isActive && "font-semibold"
-                      )}>
-                        {item.name}
+                      <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
+                        <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                       </span>
+                      <span className="prisma-nav-link__label">{item.name}</span>
                       {isActive && (
-                        <div className="ml-auto h-2 w-2 rounded-full bg-primary-foreground/50 animate-pulse" />
+                        <span className="ml-auto h-2 w-2 rounded-full bg-white/70 shadow-[0_0_18px_rgba(255,255,255,0.6)] animate-pulse" />
                       )}
                     </Link>
                   );
                 })}
-                <div className="my-4 h-px bg-border/50" />
+                <div className="my-4 h-px prisma-divider" />
                 <Link
                   href="/register-employee"
                   onClick={() => onOpenChange(false)}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                    pathname === "/register-employee"
-                      ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1 hover:shadow-md"
-                  )}
+                  title="Registrar Empleado"
+                  aria-current={pathname === "/register-employee" ? "page" : undefined}
+                  data-active={pathname === "/register-employee" ? "true" : undefined}
+                  className="prisma-nav-link group text-sm font-medium tracking-[0.08em]"
                 >
-                  <UserPlus className={cn(
-                    "h-5 w-5 transition-transform duration-200",
-                    pathname === "/register-employee" ? "scale-110" : "group-hover:scale-110"
-                  )} />
-                  <span className={cn(
-                    "transition-all duration-200",
-                    pathname === "/register-employee" && "font-semibold"
-                  )}>
-                    Registrar Empleado
+                  <span className="prisma-nav-link__icon transition-transform duration-500 group-hover:rotate-3">
+                    <UserPlus className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   </span>
+                  <span className="prisma-nav-link__label">Registrar Empleado</span>
+                  {pathname === "/register-employee" && (
+                    <span className="ml-auto h-2 w-2 rounded-full bg-white/70 shadow-[0_0_18px_rgba(255,255,255,0.6)] animate-pulse" />
+                  )}
                 </Link>
               </>
             )}
